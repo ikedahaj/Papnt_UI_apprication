@@ -1,6 +1,7 @@
-# A console_papnt Flet app
+# Papnt用のUIアプリ
 
-An example of a minimal Flet app.
+Papntを走らせるためのUIアプリです。
+事前に papnt , flet をインストールして下さい。
 
 To run the app:
 
