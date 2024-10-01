@@ -103,10 +103,25 @@ class Editable_Text(ft.Row):
         
 
 def run_papnt_doi(now_text:Editable_Text):
-    print("now is doi",now_text.value)
     doi=now_text.value
     now_text.update_value("processing...")
     now_text.update()
+    doi=now_text.value
+    if "Already added" in doi or "Done" in doi or "processing..." in doi or "Error" in doi:
+        return
+    doi=format_doi(doi)
+    now_text.value=doi
+    now_text.update()
+    now_text.update_value("processing...")
+    now_text.update()
+    database=papnt.database.Database(papnt.database.DatabaseInfo())
+    serch_flag={"filter":{"property":"DOI","rich_text":{"equals":doi}}}
+    serch_flag["database_id"]=database.database_id
+    response=database.notion.databases.query(**serch_flag)
+    if len(response["results"])!=0:
+        now_text.update_value("Already added! "+doi)
+        now_text.update()
+        return
     # print("now is processing")
     try:
         create_records_from_doi(doi)
@@ -137,20 +152,6 @@ def main(page: ft.Page):
         par={"database_id":database_info.database_id}
         for input_doi in colum.controls:
             #TODO:from_pdf とかもやる.
-            doi=input_doi.value
-            if "Already added" in doi or "Done" in doi or "processing..." in doi or "Error" in doi:
-                continue
-            doi=format_doi(doi)
-            input_doi.value=doi
-            page.update()
-            # continue
-            serch_flag={"filter":{"property":database_info.propnames["doi"],"rich_text":{"equals":doi}}}
-            serch_flag["database_id"]=par["database_id"]
-            response=client.databases.query(**serch_flag)
-            if len(response["results"])!=0:
-                input_doi.update_value("Already added! "+doi)
-                page.update()
-                continue
             run_papnt_doi(input_doi)
     # page.title("Papnt Control")
     new_task = ft.TextField(hint_text="Please input DOI")
