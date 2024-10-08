@@ -100,6 +100,8 @@ class Editable_Text(ft.Row):
     def update_value(self,value:str):
         self.value=value
         self.controls[0].value=value
+    def change_bgcolor(self,color):
+        self.controls[0].bgcolor=color
         
 
 def run_papnt_doi(now_text:Editable_Text):
@@ -113,6 +115,7 @@ def run_papnt_doi(now_text:Editable_Text):
     now_text.value=doi
     now_text.update()
     now_text.update_value("processing...")
+    now_text.change_bgcolor(ft.colors.YELLOW)
     now_text.update()
     database=papnt.database.Database(papnt.database.DatabaseInfo())
     serch_flag={"filter":{"property":"DOI","rich_text":{"equals":doi}}}
@@ -120,6 +123,7 @@ def run_papnt_doi(now_text:Editable_Text):
     response=database.notion.databases.query(**serch_flag)
     if len(response["results"])!=0:
         now_text.update_value("Already added! "+doi)
+        now_text.change_bgcolor(ft.colors.RED)
         now_text.update()
         return
     # print("now is processing")
@@ -128,8 +132,10 @@ def run_papnt_doi(now_text:Editable_Text):
     except:
         exc= sys.exc_info()
         now_text.update_value("Error: "+str(exc[1]))
+        now_text.change_bgcolor(ft.colors.RED)
     else:
         now_text.update_value("Done "+doi)
+        now_text.change_bgcolor(ft.colors.GREEN)
     now_text.update()
     # print("now is done")
 def main(page: ft.Page):
