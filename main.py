@@ -115,7 +115,6 @@ def run_papnt_doi(now_text:Editable_Text):
     now_text.value=doi
     now_text.update()
     now_text.update_value("processing...")
-    now_text.change_bgcolor(ft.colors.YELLOW)
     now_text.update()
     database=papnt.database.Database(papnt.database.DatabaseInfo())
     serch_flag={"filter":{"property":"DOI","rich_text":{"equals":doi}}}
@@ -123,7 +122,7 @@ def run_papnt_doi(now_text:Editable_Text):
     response=database.notion.databases.query(**serch_flag)
     if len(response["results"])!=0:
         now_text.update_value("Already added! "+doi)
-        now_text.change_bgcolor(ft.colors.RED)
+        now_text.change_bgcolor(ft.colors.YELLOW)
         now_text.update()
         return
     # print("now is processing")
