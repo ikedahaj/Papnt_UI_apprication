@@ -33,7 +33,7 @@ def __format_doi(doi:str)->str:
     if " " in doi:
         doi=doi.replace(" ","")
     if ("arXiv" in doi) and doi[-2]=="v":
-        
+
         doi=doi[:-2]
     elif ("arXiv" in doi) and doi[-3]=="v":
         doi=doi[:-3]
@@ -46,14 +46,8 @@ class _Edit_Database(ft.Row):
         self.ED_path_config=papnt.__path__[0]+"/config.ini"
         self.config=configparser.ConfigParser(comment_prefixes='/', allow_no_value=True)
         self.config.read(self.ED_path_config)
-        ini_tokenkey=self.config["database"]["tokenkey"]
-        if ini_tokenkey=="":
-            ini_tokenkey=None
-        ini_database_id=self.config["database"]["tokenkey"]
-        if ini_database_id=="":
-            ini_database_id=None
-        self.ED_text_tokenkey=ft.Text(value=ini_tokenkey)
-        self.ED_text_database_id=ft.Text(value=ini_database_id)
+        self.ED_text_tokenkey=ft.Text(value=(None if self.config["database"]["tokenkey"] =="''" else self.config["database"]["tokenkey"]) )
+        self.ED_text_database_id=ft.Text(value=(None if self.config["database"]["database_id"]=="''" else self.config["database"]["database_id"]))
         ED_buttun_edit=ft.FloatingActionButton(icon=ft.icons.EDIT,on_click=self.__ED_clicked_text_edit)
         ED_buttun_edit.mini=True
         self.controls=[ED_buttun_edit,self.ED_text_tokenkey,self.ED_text_database_id]
@@ -71,7 +65,6 @@ class _Edit_Database(ft.Row):
             self.config.write(configfile, True)
         self.ED_text_tokenkey=ft.Text(value=self.config["database"]["tokenkey"])
         self.ED_text_database_id=ft.Text(value=self.config["database"]["database_id"])
-        self.controls=[ft.FloatingActionButton(icon=ft.icons.EDIT,on_click=self.__ED_clicked_text_edit,mini=True),self.ED_text_tokenkey,self.ED_text_database_id]
         self.update()
 
 # 編集可能なテキスト。
@@ -189,9 +182,9 @@ class View_input_doi(ft.View):
         add_button=ft.FloatingActionButton(icon=ft.icons.ADD, on_click=add_clicked)
         run_button=ft.FloatingActionButton(icon=ft.icons.RUN_CIRCLE, on_click=run_clicked)
         delete_button=ft.FloatingActionButton(icon=ft.icons.DELETE, on_click=delete_clicked)
-        list_doi=ft.Column()
+        list_doi=ft.Column(scroll=ft.ScrollMode.HIDDEN,expand=True)
         # 画面に追加する;
-        self.controls.append(ft.Row([ft.Text("　論文追加",theme_style=ft.TextThemeStyle.HEADLINE_LARGE,weight=ft.FontWeight.W_900)],alignment=ft.MainAxisAlignment.SPACE_BETWEEN,height=50))
+        self.controls.append(ft.Row([ft.Text("論文追加",theme_style=ft.TextThemeStyle.HEADLINE_LARGE)],alignment=ft.MainAxisAlignment.SPACE_BETWEEN,height=50))
         self.controls.append(_Edit_Database())
         self.controls.append(ft.Row([input_text_doi,add_button],alignment=ft.MainAxisAlignment.SPACE_BETWEEN))
         self.controls.append(ft.Row([run_button,delete_button]))
