@@ -54,7 +54,7 @@ class _Edit_Database(ft.Row):
         self.__ED_text_input_database_id=ft.TextField(value=self.__ED_text_database_id.value,hint_text="database_id",visible=False)
         self.__ED_text_input_tokenkey=ft.TextField(value=self.__ED_text_tokenkey.value,hint_text="tokenkey",visible=False)
         self.__ED_buttun_done_edit=ft.FloatingActionButton(icon=ft.icons.DONE,on_click=self.__ED_clicked_done_edit,visible=False)
-        self.controls=[self.__ED_buttun_edit,self.__ED_text_tokenkey,self.__ED_text_database_id]
+        self.controls=[self.__ED_buttun_edit,self.__ED_text_tokenkey,self.__ED_text_database_id,self.__ED_buttun_done_edit,self.__ED_text_input_tokenkey,self.__ED_text_input_database_id]
     def __ED_clicked_text_edit(self,e):
         self.__ED_text_input_database_id.visible=True
         self.__ED_text_input_tokenkey.visible=True
