@@ -391,12 +391,15 @@ class view_bib_maker(ft.View):
         self.controls.append(self._input_Paper_List)
         self.controls.append(self.run_button)
         self.controls.append(self.Paper_list)
+    # select_prop_flag用の関数;
     def _change_prop_name(self,propname:str)->None:
         item:type[_Text_Paper]
         for item in self.Paper_list.controls:
             item.change_text(propname)
         self.Paper_list.update()
         self._input_Paper_List.PL_change_prop_name(propname)
+    def _dropdown_changed(self,e):
+        self._change_prop_name(e.data)
     def _add_prop_to_input_list(self,notion_page):
         self._input_Paper_List.add_new_props(notion_page)
 
@@ -404,8 +407,6 @@ class view_bib_maker(ft.View):
         new_text_cl=_Text_Paper(text_value,notion_result,self._input_Paper_List.add_new_props)
         self.Paper_list.controls.insert(0,new_text_cl)
         self.Paper_list.update()
-    def _dropdown_changed(self,e):
-        self._change_prop_name(e.data)
     def add_Paper_List_New_Cite_in_prop(self,new_cite_in_value):
         #全てのリストから加えていないものを見つける
         un_added_list=self._input_Paper_List.PL_get_init_list()
