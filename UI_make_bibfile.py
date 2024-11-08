@@ -120,6 +120,13 @@ class _Papers_List(ft.SearchBar):
         return self.__PL_init_list
 class _Bib_File_Name(ft.Row):
     def __init__(self,text_list:list,add_Paper_List_New_Cite_in_prop):
+        """出力するbibファイルの候補を出して、ファイル名を入れる関数。
+
+        Args:
+            text_list (list): 最初に提示するファイル名の候補
+            add_Paper_List_New_Cite_in_prop (function(str)): prop名を入力したときに、元から指定されていた論文を候補に表示する関数。
+                                                                引数はbibファイル名
+        """
         super().__init__()
         # anchor=ft.SearchBar()
         self.value=None
@@ -336,7 +343,13 @@ class _Edit_Database(ft.Row):
 
 class _Text_Paper(ft.Row):
     def __init__(self,text:str,notion_result:dict,add_to_input_list):
+        """候補として追加するテキスト。notionに追加するのは実行する時
 
+        Args:
+            text (str): 最初に表示するテキスト
+            notion_result (dict): 追加する論文のpage_prop
+            add_to_input_list (function): 消す時に呼ぶ関数。引数は(dict:notion_result)
+        """
         super().__init__()
         self.value=text
         self.data=notion_result
@@ -407,13 +420,15 @@ class view_bib_maker(ft.View):
     def _add_prop_to_input_list(self,notion_page):
         self._input_Paper_List.add_new_props(notion_page)
 
-    def _add_Paper_list(self,text_value,notion_result):
+    # 候補のテキストを追加する;
+    def _add_Paper_list(self,text_value,notion_result:dict):
         def __clicked_delete_text(page_prop:dict):
             self._input_Paper_List.add_new_props(page_prop)
             self._delete_Cite_in_prop_from_notion(page_prop)
         new_text_cl=_Text_Paper(text_value,notion_result,__clicked_delete_text)
         self.Paper_list.controls.insert(0,new_text_cl)
         self.Paper_list.update()
+    # 上記テキストのdeleteボタン用の関数;
     def _delete_Cite_in_prop_from_notion(self,page_prop:dict):
         for bib_filename_prev in page_prop["properties"][self.__notion_configs["propnames"]["output_target"]]["multi_select"]:
             if bib_filename_prev["name"]==self._Bib_Name.value:
