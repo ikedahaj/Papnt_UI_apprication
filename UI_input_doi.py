@@ -10,13 +10,15 @@ import papnt
 
 import papnt.misc
 import papnt.database
+import papnt.notionprop
 
 # doiからnotionに論文情報を追加する;
 def __create_records_from_doi(doi:str):
     dbinfo=papnt.database.DatabaseInfo()
     database=papnt.database.Database(dbinfo)
     path_config=papnt.__path__[0]+"/config.ini"
-    prop = papnt.misc.load_config(path_config)
+    config = papnt.misc.load_config(path_config)
+    prop=papnt.notionprop.NotionPropMaker().from_doi(doi,config["propnames"])
     prop |= {'info': {'checkbox': True}}
     try:
         database.create(prop)
@@ -90,14 +92,16 @@ class _Editable_Text(ft.Row):
         self.value=input_value
         self.__ET_text=ft.Text()
         self.__ET_text.value=input_value
+        self.__ET_state_icon=ft.Icon()
         __ET_button_edit=ft.IconButton(icon=ft.icons.EDIT,on_click=self.__ET_clicked_text_edit,icon_size=20)
         __ET_button_run=ft.IconButton(icon=ft.icons.RUN_CIRCLE,on_click=self.__ET_clicked_run_papnt,icon_size=20)
         __ET_button_delete=ft.IconButton(icon=ft.icons.DELETE,on_click=self.__ET_clicked_text_delete,icon_size=20)
         self.__ET_buttons_plain_text=ft.Row(controls=[__ET_button_edit,__ET_button_run,__ET_button_delete])
         self.__ET_button_done_edit=ft.FloatingActionButton(icon=ft.icons.DONE,on_click=self.__ET_clicked_done_edit,visible=False)
         self.__ET_text_input=ft.TextField(value=self.value,on_submit=self.__ET_clicked_done_edit,visible=False)
-        self.controls=[self.__ET_text,self.__ET_buttons_plain_text,self.__ET_text_input,self.__ET_button_done_edit]
+        self.controls=[self.__ET_state_icon,self.__ET_text,self.__ET_buttons_plain_text,self.__ET_text_input,self.__ET_button_done_edit]
     def __ET_clicked_text_edit(self,e):
+        self.__ET_state_icon=False
         self.__ET_text.visible=False
         self.__ET_buttons_plain_text.visible=False
         self.__ET_text_input.visible=True
@@ -109,6 +113,7 @@ class _Editable_Text(ft.Row):
         _run_papnt_doi(self)
 
     def __ET_clicked_done_edit(self,e):
+        self.__ET_state_icon.visible=True
         self.__ET_text.visible=True
         self.__ET_buttons_plain_text.visible=True
         self.__ET_text_input.visible=False
@@ -131,13 +136,16 @@ class _Editable_Text(ft.Row):
                 change_bgcolor(None)
             case "error":
                 change_text(input_value)
-                change_bgcolor(ft.colors.RED)
+                self.__ET_state_icon.name=ft.icons.ERROR
+                self.__ET_state_icon.color=ft.colors.RED
             case "succeed":
                 change_text(input_value)
-                change_bgcolor(ft.colors.GREEN)
+                self.__ET_state_icon.name=ft.icons.DONE
+                self.__ET_state_icon.color=ft.colors.GREEN
             case "warn":
                 change_text(input_value)
-                change_bgcolor(ft.colors.YELLOW)
+                self.__ET_state_icon.name=ft.icons.WARNING
+                self.__ET_state_icon.color=ft.colors.YELLOW
         self.update()
 
 # テキスト１行のdoiからnotionに情報を追加する;
@@ -153,7 +161,9 @@ def _run_papnt_doi(now_text:_Editable_Text):
     database=papnt.database.Database(papnt.database.DatabaseInfo())
     serch_flag={"filter":{"property":"DOI","rich_text":{"equals":doi}}}
     serch_flag["database_id"]=database.database_id
+    print("fst")
     response=database.notion.databases.query(**serch_flag)
+    print("scd")
     if len(response["results"])!=0:
         now_text.update_value("warn","Already added! "+doi)
         return
