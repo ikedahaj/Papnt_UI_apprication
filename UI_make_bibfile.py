@@ -29,7 +29,8 @@ def _access_notion_prop(value_props):
                 connected_lists+=","
             return connected_lists
         case "rich_text":
-            return value_props["rich_text"][0]["plain_text"]
+            out_val=value_props["rich_text"]
+            return out_val[0]["plain_text"] if len(out_val)>0 else None
         case "number":
             return value_props["number"]
         case "url":
@@ -407,6 +408,10 @@ class view_bib_maker(ft.View):
         new_text_cl=_Text_Paper(text_value,notion_result,self._input_Paper_List.add_new_props)
         self.Paper_list.controls.insert(0,new_text_cl)
         self.Paper_list.update()
+    def _delete_from_notion(self,page_prop:dict):
+        if _access_notion_prop_value(page_prop,'Cite in')==self._Bib_Name.value:
+            pass
+        pass
     def add_Paper_List_New_Cite_in_prop(self,new_cite_in_value):
         #全てのリストから加えていないものを見つける
         un_added_list=self._input_Paper_List.PL_get_init_list()
