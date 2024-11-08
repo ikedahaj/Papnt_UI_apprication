@@ -345,6 +345,10 @@ class _Text_Paper(ft.Row):
         self.__TP_delete_button=ft.FloatingActionButton(icon=ft.icons.DELETE,on_click=self.__delete_clicked)
         self.controls=[self.__TP_display_text,self.__TP_delete_button]
     def __delete_clicked(self,e):
+        self.__TP_delete_button.shape=ft.ContinuousRectangleBorder()
+        self.__TP_delete_button.bgcolor=ft.colors.GREEN
+        self.__TP_delete_button.icon=ft.icons.RUN_CIRCLE
+        self.update()
         self.__TP_add_to_input_list(self.data)
         self.clean()
     def change_text(self,propname):
