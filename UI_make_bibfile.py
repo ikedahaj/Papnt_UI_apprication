@@ -68,7 +68,7 @@ class _Papers_List(ft.SearchBar):
         self.controls=[self.__PL_listview]
         self.bar_hint_text="bibファイルに加える論文を選択"
         self.view_hint_text=self.bar_hint_text
-        self.autofocus=True
+        self.autofocus=False
         self.on_tap=self.__handle_tap
         self.on_change=self.__PL_handle_change
         self.__PL_add_list_to_out=add_list
@@ -203,7 +203,6 @@ class _Bib_File_Name(ft.Row):
         self.update()
         self.value=new_text
         self.__funk_add_Paper_List_update_prop(self.value)
-        pass
     def __reset_anchor(self,e):
         # self.__BFN_serBar.controls=[self.__BFN_listview]
         self.__BFN_visible_input()
@@ -408,9 +407,25 @@ class view_bib_maker(ft.View):
         new_text_cl=_Text_Paper(text_value,notion_result,self._input_Paper_List.add_new_props)
         self.Paper_list.controls.insert(0,new_text_cl)
         self.Paper_list.update()
-    def _delete_from_notion(self,page_prop:dict):
-        if _access_notion_prop_value(page_prop,'Cite in')==self._Bib_Name.value:
-            pass
+    def _delete_Cite_in_prop_from_notion(self,page_prop:dict):
+        for bib_filename_prev in page_prop["properties"][self.__notion_configs["propnames"]["output_target"]]["multi_select"]:
+            if bib_filename_prev["name"]==self._Bib_Name.value:
+                page_prop["properties"][self.__notion_configs["output_target"]["multi_select"]].remove(bib_filename_prev)
+                cite_in_items=[{"name":each_filename} for each_filename in page_prop["properties"][self.__notion_configs["propnames"]["output_target"]]["multi_select"] if each_filename["name"]!=self._Bib_Name.value]
+                next_prop={self.__notion_configs["propnames"]["output_target"]:{
+                    "multi_select":cite_in_items
+                    }
+                }
+                try:
+                    self.database.update(page_prop["id"],next_prop)
+                except:
+                    import sys
+                    exc= sys.exc_info()
+                    print(str(exc[1]))
+                    self.run_button.text=str(exc[1])
+                    self.run_button.style=ft.ButtonStyle(bgcolor=ft.colors.RED)
+                    self.update()
+                break
         pass
     def add_Paper_List_New_Cite_in_prop(self,new_cite_in_value):
         #全てのリストから加えていないものを見つける
