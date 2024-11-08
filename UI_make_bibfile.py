@@ -404,18 +404,22 @@ class view_bib_maker(ft.View):
         self._input_Paper_List.add_new_props(notion_page)
 
     def _add_Paper_list(self,text_value,notion_result):
-        new_text_cl=_Text_Paper(text_value,notion_result,self._input_Paper_List.add_new_props)
+        def __clicked_delete_text(page_prop:dict):
+            self._input_Paper_List.add_new_props(page_prop)
+            self._delete_Cite_in_prop_from_notion(page_prop)
+        new_text_cl=_Text_Paper(text_value,notion_result,__clicked_delete_text)
         self.Paper_list.controls.insert(0,new_text_cl)
         self.Paper_list.update()
     def _delete_Cite_in_prop_from_notion(self,page_prop:dict):
         for bib_filename_prev in page_prop["properties"][self.__notion_configs["propnames"]["output_target"]]["multi_select"]:
             if bib_filename_prev["name"]==self._Bib_Name.value:
-                page_prop["properties"][self.__notion_configs["output_target"]["multi_select"]].remove(bib_filename_prev)
-                cite_in_items=[{"name":each_filename} for each_filename in page_prop["properties"][self.__notion_configs["propnames"]["output_target"]]["multi_select"] if each_filename["name"]!=self._Bib_Name.value]
+                page_prop["properties"][self.__notion_configs["propnames"]["output_target"]]["multi_select"].remove(bib_filename_prev)
+                cite_in_items=[{"name":each_filename["name"]} for each_filename in page_prop["properties"][self.__notion_configs["propnames"]["output_target"]]["multi_select"] if each_filename["name"]!=self._Bib_Name.value]
                 next_prop={self.__notion_configs["propnames"]["output_target"]:{
                     "multi_select":cite_in_items
                     }
                 }
+                print(next_prop)
                 try:
                     self.database.update(page_prop["id"],next_prop)
                 except:
