@@ -100,6 +100,12 @@ class _Editable_Text(ft.Row):
         self.__ET_button_done_edit=ft.FloatingActionButton(icon=ft.icons.DONE,on_click=self.__ET_clicked_done_edit,visible=False)
         self.__ET_text_input=ft.TextField(value=self.value,on_submit=self.__ET_clicked_done_edit,visible=False)
         self.controls=[self.__ET_state_icon,self.__ET_text,self.__ET_buttons_plain_text,self.__ET_text_input,self.__ET_button_done_edit]
+    def __ET_switch_icon_and_progress(self,mode:typing.Literal["Icon","Progress bar"]):
+        match mode:
+            case "Icon":
+                self.controls[0]=self.__ET_state_icon
+            case "Progress bar":
+                self.controls[0]=ft.ProgressRing(width=16, height=16)
     def __ET_clicked_text_edit(self,e):
         self.__ET_state_icon.visible=False
         self.__ET_text.visible=False
@@ -133,14 +139,10 @@ class _Editable_Text(ft.Row):
         def change_text(input_value:str):
             self.value=input_value
             self.__ET_text.value=input_value
-        print(type(self.__ET_state_icon))
-        print(type(self.__ET_state_icon)==ft.ProgressRing)
-        if type(self.controls[0])==ft.ProgressRing:
-            print("changed")
-            self.controls[0]=self.__ET_state_icon
+        self.__ET_switch_icon_and_progress("Icon")
         match mode:
             case "processing":
-                self.controls[0]=ft.ProgressRing(width=16, height=16)
+                self.__ET_switch_icon_and_progress("Progress bar")
                 if input_value=="":
                     change_text("processing...")
                 else:
