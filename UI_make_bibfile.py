@@ -14,7 +14,6 @@ import papnt.misc
 import papnt.mainfunc
 
 
-# Python code to sort a list of strings A based on the rules provided
 def _access_notion_prop(value_props):
     mode=value_props["type"]
     match mode:
@@ -274,6 +273,11 @@ class _Get_Folder_Name(ft.SearchBar):
         self.focus()
         self.update()
     def GFN_update_value(self,new_value:str):
+        """表示さてれている文字列を変更する
+
+        Args:
+            new_value (str): 変更後の文字列
+        """
         # print(new_value)
         if new_value is None:
             self.__GFN_listview.clean()
@@ -313,6 +317,9 @@ class _Get_Folder_Name(ft.SearchBar):
 
 class _Edit_Database(ft.Row):
     def __init__(self):
+        """bibファイルを出力するフォルダ名を入手する
+            初期値はpapnt/config.iniから持ってくる
+        """
         super().__init__()
         self.ED_path_config=papnt.__path__[0]+"/config.ini"
         self.config=configparser.ConfigParser(comment_prefixes='/', allow_no_value=True)
@@ -405,9 +412,11 @@ class view_bib_maker(ft.View):
         self.select_prop_flag.options=[ft.dropdown.Option(key=propname) for propname in self.__notion_configs["propnames"].values()]
         self.select_prop_flag.options.insert(0,ft.dropdown.Option(key="Name"))
         self._input_Paper_List.bar_leading=self.select_prop_flag
+        #要素を画面に追加;
         self.controls.append(self._input_Paper_List)
         self.controls.append(self.run_button)
         self.controls.append(self.Paper_list)
+    #--------------------------------------------------
     # select_prop_flag用の関数;
     def _change_prop_name(self,propname:str)->None:
         item:type[_Text_Paper]
@@ -419,7 +428,7 @@ class view_bib_maker(ft.View):
         self._change_prop_name(e.data)
     def _add_prop_to_input_list(self,notion_page):
         self._input_Paper_List.add_new_props(notion_page)
-
+    #---------------------------------------------------
     # 候補のテキストを追加する;
     def _add_Paper_list(self,text_value,notion_result:dict):
         def __clicked_delete_text(page_prop:dict):
@@ -429,6 +438,7 @@ class view_bib_maker(ft.View):
         self.Paper_list.controls.insert(0,new_text_cl)
         self.Paper_list.update()
     # 上記テキストのdeleteボタン用の関数;
+    # 候補に挙げていた論文を候補から消すときに、notion側のものも消す;
     def _delete_Cite_in_prop_from_notion(self,page_prop:dict):
         for bib_filename_prev in page_prop["properties"][self.__notion_configs["propnames"]["output_target"]]["multi_select"]:
             if bib_filename_prev["name"]==self._Bib_Name.value:
@@ -438,7 +448,6 @@ class view_bib_maker(ft.View):
                     "multi_select":cite_in_items
                     }
                 }
-                print(next_prop)
                 try:
                     self.database.update(page_prop["id"],next_prop)
                 except:
@@ -449,15 +458,20 @@ class view_bib_maker(ft.View):
                     self.run_button.style=ft.ButtonStyle(bgcolor=ft.colors.RED)
                     self.update()
                 break
-        pass
     def add_Paper_List_New_Cite_in_prop(self,new_cite_in_value):
         #全てのリストから加えていないものを見つける
+        # bibファイル名を変えたときに呼ぶ;
         un_added_list=self._input_Paper_List.PL_get_init_list()
         for un_added_paper in un_added_list:
             if any([cite_in_item["name"]==new_cite_in_value for cite_in_item in un_added_paper["properties"][self.__notion_configs["propnames"]["output_target"]]["multi_select"]]):
                 self._add_Paper_list(_access_notion_prop_value(un_added_paper,self.select_prop_flag.value),un_added_paper)
 
     def __makebib(self,e):
+        """
+        候補に挙げられている論文から、
+        1. notion側にCite in プロパティを追加
+        2. bibファイルを出力
+        """
         #notionのCite in にデータを追加する;
         self.run_button.text="実行中..."
         self.run_button.style=ft.ButtonStyle(bgcolor=ft.colors.GREEN,shape=ft.RoundedRectangleBorder(radius=1))
