@@ -112,6 +112,8 @@ class _Editable_Text(ft.Row):
         self.__ET_buttons_plain_text.visible=False
         self.__ET_text_input.visible=True
         self.__ET_button_done_edit.visible=True
+        self.__ET_text_input.value=self.__ET_text.value
+        self.update()
     def __ET_clicked_text_delete(self,e):
         self.clean()
 
@@ -160,9 +162,6 @@ class _Editable_Text(ft.Row):
                 change_text(input_value)
                 self.__ET_state_icon.name=ft.icons.WARNING
                 self.__ET_state_icon.color=ft.colors.YELLOW
-        print(type(self.__ET_state_icon))
-        print(self.__ET_state_icon.visible)
-        print(self.__ET_state_icon)
         self.update()
 
 # テキスト１行のdoiからnotionに情報を追加する;
@@ -178,9 +177,7 @@ def _run_papnt_doi(now_text:_Editable_Text):
     database=papnt.database.Database(papnt.database.DatabaseInfo())
     serch_flag={"filter":{"property":"DOI","rich_text":{"equals":doi}}}
     serch_flag["database_id"]=database.database_id
-    print("fst")
     response=database.notion.databases.query(**serch_flag)
-    print("scd")
     if len(response["results"])!=0:
         now_text.update_value("warn","Already added! "+doi)
         return
