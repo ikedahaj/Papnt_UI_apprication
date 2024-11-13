@@ -122,6 +122,12 @@ class _Editable_Text(ft.Row):
         self.value=self.__ET_text.value
         self.update()
     def update_value(self,mode:typing.Literal["processing","error","succeed","warn"],input_value:str=""):
+        """ETの文章を実行時に変える
+
+        Args:
+            mode (typing.Literal[&quot;processing&quot;,&quot;error&quot;,&quot;succeed&quot;,&quot;warn&quot;]): 状態：進行中、エラー発生、成功、警告
+            input_value (str, optional): 表示する文字列. Defaults to "".
+        """
         def change_bgcolor(color):
             self.__ET_text.bgcolor=color
         def change_text(input_value:str):
@@ -205,11 +211,12 @@ class View_input_doi(ft.View):
         delete_button=ft.FloatingActionButton(icon=ft.icons.DELETE, on_click=delete_clicked)
         list_doi=ft.Column(scroll=ft.ScrollMode.HIDDEN,expand=True)
         # 画面に追加する;
-        self.controls.append(ft.Row([ft.Text("論文追加",theme_style=ft.TextThemeStyle.HEADLINE_LARGE)],alignment=ft.MainAxisAlignment.SPACE_BETWEEN,height=50))
+
+        self.appbar=ft.AppBar(leading=ft.Icon(ft.icons.INPUT),title=ft.Text("論文追加"),bgcolor=ft.colors.SURFACE_VARIANT)
         self.controls.append(_Edit_Database())
         self.controls.append(ft.Row([input_text_doi,add_button],alignment=ft.MainAxisAlignment.SPACE_BETWEEN))
         self.controls.append(ft.Row([run_button,delete_button]))
         self.controls.append(list_doi)
     def set_button_to_appbar(self,button):
-        self.controls[0].controls.append(button)
+        self.appbar.actions=[button]
 
