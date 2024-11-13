@@ -101,7 +101,7 @@ class _Editable_Text(ft.Row):
         self.__ET_text_input=ft.TextField(value=self.value,on_submit=self.__ET_clicked_done_edit,visible=False)
         self.controls=[self.__ET_state_icon,self.__ET_text,self.__ET_buttons_plain_text,self.__ET_text_input,self.__ET_button_done_edit]
     def __ET_clicked_text_edit(self,e):
-        self.__ET_state_icon=False
+        self.__ET_state_icon.visible=False
         self.__ET_text.visible=False
         self.__ET_buttons_plain_text.visible=False
         self.__ET_text_input.visible=True
@@ -133,13 +133,19 @@ class _Editable_Text(ft.Row):
         def change_text(input_value:str):
             self.value=input_value
             self.__ET_text.value=input_value
+        print(type(self.__ET_state_icon))
+        print(type(self.__ET_state_icon)==ft.ProgressRing)
+        if type(self.controls[0])==ft.ProgressRing:
+            print("changed")
+            self.controls[0]=self.__ET_state_icon
         match mode:
             case "processing":
+                self.controls[0]=ft.ProgressRing(width=16, height=16)
                 if input_value=="":
                     change_text("processing...")
                 else:
                     change_text(input_value)
-                change_bgcolor(None)
+                # change_bgcolor(None)
             case "error":
                 change_text(input_value)
                 self.__ET_state_icon.name=ft.icons.ERROR
@@ -152,6 +158,9 @@ class _Editable_Text(ft.Row):
                 change_text(input_value)
                 self.__ET_state_icon.name=ft.icons.WARNING
                 self.__ET_state_icon.color=ft.colors.YELLOW
+        print(type(self.__ET_state_icon))
+        print(self.__ET_state_icon.visible)
+        print(self.__ET_state_icon)
         self.update()
 
 # テキスト１行のdoiからnotionに情報を追加する;
