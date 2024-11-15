@@ -374,6 +374,8 @@ class _Text_Paper(ft.Row):
     def change_text(self,propname):
         self.value=_access_notion_prop_value(self.data,propname)
         self.update()
+    def get_notion_page(self)->dict:
+        return self.data
 
 
 class view_bib_maker(ft.View):
@@ -437,7 +439,7 @@ class view_bib_maker(ft.View):
         new_text_cl=_Text_Paper(text_value,notion_result,__clicked_delete_text)
         self.Paper_list.controls.insert(0,new_text_cl)
         self.Paper_list.update()
-    # 上記テキストのdeleteボタン用の関数;
+    # _add_Paper_list内のdeleteボタン用の関数;
     # 候補に挙げていた論文を候補から消すときに、notion側のものも消す;
     def _delete_Cite_in_prop_from_notion(self,page_prop:dict):
         for bib_filename_prev in page_prop["properties"][self.__notion_configs["propnames"]["output_target"]]["multi_select"]:
@@ -477,9 +479,9 @@ class view_bib_maker(ft.View):
         self.run_button.style=ft.ButtonStyle(bgcolor=ft.colors.GREEN,shape=ft.RoundedRectangleBorder(radius=1))
         self.update()
         bib_name=self._Bib_Name.value
-        items:type[ft.Row]
+        items:type[_Text_Paper]
         for items in self.Paper_list.controls:#ft.Row(controls=[ft.Text,ft.FloatingActionButton])
-            notion_page=items.controls[0].data
+            notion_page=items.get_notion_page()
             # print(notion_page)
             cite_in_items=[{"name":cite_in_item["name"]} for cite_in_item in notion_page["properties"][self.__notion_configs["propnames"]["output_target"]]["multi_select"]]
             next_dict={"name":bib_name}
