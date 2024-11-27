@@ -372,7 +372,9 @@ class _Text_Paper(ft.Row):
         self.__TP_add_to_input_list(self.data)
         self.clean()
     def change_text(self,propname):
-        self.value=_access_notion_prop_value(self.data,propname)
+        new_text=_access_notion_prop_value(self.data,propname)
+        self.value=new_text
+        self.__TP_display_text.value=new_text
         self.update()
     def get_notion_page(self)->dict:
         return self.data
@@ -424,8 +426,8 @@ class view_bib_maker(ft.View):
         item:type[_Text_Paper]
         for item in self.Paper_list.controls:
             item.change_text(propname)
-        self.Paper_list.update()
         self._input_Paper_List.PL_change_prop_name(propname)
+        self.Paper_list.update()
     def _dropdown_changed(self,e):
         self._change_prop_name(e.data)
     def _add_prop_to_input_list(self,notion_page):
