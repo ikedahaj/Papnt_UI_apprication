@@ -537,8 +537,12 @@ class view_bib_maker(ft.View):
     # ----------------------------------------
     # 外から新しいpropを渡す;
     def add_new_paper_from_out(self, new_paper: dict):
-        self._input_Paper_List.add_new_props(new_paper)
+        """bib_makeクラスの外から新しいpropを渡す
 
+        Args:
+            new_paper (dict): 追加する論文の情報。notion.createに渡す辞書
+        """
+        self._input_Paper_List.add_new_props(new_paper)
     # --------------------------------------------------
     # select_prop_flag用の関数;
     def _change_prop_name(self, propname: str) -> None:

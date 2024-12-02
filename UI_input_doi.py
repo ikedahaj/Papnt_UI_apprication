@@ -12,6 +12,9 @@ import papnt.misc
 import papnt.database
 import papnt.notionprop
 
+# global list of added papers
+list_un_added_papers: list[dict] = []
+
 
 # doiからnotionに論文情報を追加する;
 def __create_records_from_doi(doi: str):
@@ -22,11 +25,16 @@ def __create_records_from_doi(doi: str):
     prop = papnt.notionprop.NotionPropMaker().from_doi(doi, config["propnames"])
     prop |= {"info": {"checkbox": True}}
     try:
-        database.create(prop)
+        result_create = database.notion.pages.create(
+            parent={"database_id": database.database_id}, properties=prop
+        )
     except Exception as e:
         print(str(e))
         name = prop["Name"]["title"][0]["text"]["content"]
         raise ValueError(f"Error while updating record: {name}")
+    else:
+        list_un_added_papers.append(result_create)
+        # print(list_un_added_papers)
 
 
 # doiをフォーマットして、notion内の形式と合わせる;
