@@ -77,17 +77,18 @@ def _check_arXiv_paper_accepted(doi: str) -> dict | None:
 
 
 def _return_page_prop_accepted_paper(
-    doi: str, db_notion: papnt.database.Database
+    doi: str, db_notion: papnt.database.Database,propnames:dict
 ) -> dict | None:
     if not "arXiv" in doi:
         return None
     new_doi = _check_arXiv_paper_accepted(doi)
     if new_doi is not None:
-        prop = pap_prop.NotionPropMaker().from_doi(new_doi)
+        prop = pap_prop.NotionPropMaker().from_doi(new_doi,propnames)
         result_create = db_notion.notion.pages.create(
             parent={"database_id": db_notion.database_id}, properties=prop
         )
         db_notion.notion.pages.update(page_id=result_create["id"], archived=True)
+        print(result_create["properties"]["DOI"])
         return result_create
     else:
         return None
@@ -753,13 +754,16 @@ class view_bib_maker(ft.View):
                 _access_notion_prop_value(
                     notion_page, self.__notion_configs["propnames"]["doi"]
                 ),
-                self.database,
+                self.database,self.__notion_configs["propnames"]
             )
             if page_arXiv_update is not None:
                 notion_page = page_arXiv_update
+                print(notion_page["properties"]["DOI"])
+            print(notion_page["properties"]["DOI"])
             list_add_bib_papers.append(notion_page)
         """Make BIB file including reference information from database"""
-
+        print("list[2]")
+        print(list_add_bib_papers[2]["properties"]["DOI"])
         try:
             _make_bibfile_from_lists(
                 self.database,
@@ -768,12 +772,12 @@ class view_bib_maker(ft.View):
                 list_add_bib_papers,
                 self.__notion_configs["misc"]["dir_save_bib"],
             )
-            papnt.mainfunc.make_bibfile_from_records(
-                self.database,
-                bib_name,
-                self.__notion_configs["propnames"],
-                self.__notion_configs["misc"]["dir_save_bib"],
-            )
+            # papnt.mainfunc.make_bibfile_from_records(
+            #     self.database,
+            #     bib_name,
+            #     self.__notion_configs["propnames"],
+            #     self.__notion_configs["misc"]["dir_save_bib"],
+            # )
             papnt.mainfunc.make_abbrjson_from_bibpath(
                 f'{self.__notion_configs["misc"]["dir_save_bib"]}/{bib_name}.bib',
                 self.__notion_configs["abbr"],
