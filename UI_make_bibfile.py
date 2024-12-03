@@ -6,7 +6,8 @@ import time
 from anyio import value
 import flet as ft
 import configparser
-import bibtexparser as bib_parser
+import bibtexparser.bwriter
+import bibtexparser.bibdatabase
 import arxiv
 import papnt
 
@@ -47,7 +48,7 @@ def _access_notion_prop_value(prop_page: dict, prop: str) -> str:
 
     Args:
         prop_page (dict): notionのページ."results"の値
-        prop (string): notionのプロパティ名
+        prop (string): notionのプロパティ名.notion側のタイトル
 
     Returns:
         string: 入力したページの値
@@ -111,9 +112,9 @@ def _make_bibfile_from_lists(
         for record in list_page_prop_papers
     ]
 
-    bib_db = bib_parser.BibDatabase()
+    bib_db = bibtexparser.bibdatabase.BibDatabase()
     bib_db.entries = entries
-    writer = bib_parser.BibTexWriter()
+    writer = bibtexparser.bwriter.BibTexWriter()
     with open(f"{dir_save_bib}/{target}.bib", "w") as bibfile:
         bibfile.write(writer.write(bib_db))
 
@@ -749,7 +750,10 @@ class view_bib_maker(ft.View):
             # --------------------------------------------------------------------------------
             # arXivの論文を加える場合、アクセプトされているかを調べる;
             page_arXiv_update = _return_page_prop_accepted_paper(
-                notion_page[self.__notion_configs["propnames"]["doi"]], self.database
+                _access_notion_prop_value(
+                    notion_page, self.__notion_configs["propnames"]["doi"]
+                ),
+                self.database,
             )
             if page_arXiv_update is not None:
                 notion_page = page_arXiv_update
@@ -764,12 +768,12 @@ class view_bib_maker(ft.View):
                 list_add_bib_papers,
                 self.__notion_configs["misc"]["dir_save_bib"],
             )
-            # papnt.mainfunc.make_bibfile_from_records(
-            #     self.database,
-            #     bib_name,
-            #     self.__notion_configs["propnames"],
-            #     self.__notion_configs["misc"]["dir_save_bib"],
-            # )
+            papnt.mainfunc.make_bibfile_from_records(
+                self.database,
+                bib_name,
+                self.__notion_configs["propnames"],
+                self.__notion_configs["misc"]["dir_save_bib"],
+            )
             papnt.mainfunc.make_abbrjson_from_bibpath(
                 f'{self.__notion_configs["misc"]["dir_save_bib"]}/{bib_name}.bib',
                 self.__notion_configs["abbr"],
