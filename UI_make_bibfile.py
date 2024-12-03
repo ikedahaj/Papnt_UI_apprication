@@ -6,12 +6,16 @@ import time
 from anyio import value
 import flet as ft
 import configparser
+import bibtexparser as bib_parser
+import arxiv
 import papnt
 
 import papnt.database
 import papnt.cli
 import papnt.misc
 import papnt.mainfunc
+import papnt.notionprop as pap_prop
+import papnt.prop2entry as pap_pr2en
 
 
 def _access_notion_prop(value_props):
@@ -52,6 +56,54 @@ def _access_notion_prop_value(prop_page: dict, prop: str) -> str:
     return _access_notion_prop(page_prop[prop])
 
 
+# ----------------------------------------------------------------------------
+# arXiv更新用関数;
+# doi整形;
+def _make_doi_arxiv(doi: str) -> str:
+    sp = doi.split("arXiv")
+    if sp[1][0] == "." or sp[1][0] == ":":
+        sp[1] = sp[1][1:]
+    return sp[1]
+
+
+# arXivのものを持ってきた時、アクセプトされているならdoiを、そうでないならnoneを返す;
+def _check_arXiv_paper_accepted(doi: str) -> dict | None:
+    doi2 = _make_doi_arxiv(doi)
+    client = arxiv.Client()
+    serch = arxiv.Search(id_list=[doi2])
+    reslut = next(client.results(serch))
+    return reslut.doi
+
+
+def _return_page_prop_accepted_paper(
+    doi: str, db_notion: papnt.database.Database
+) -> dict | None:
+    if not "arXiv" in doi:
+        return None
+    new_doi = _check_arXiv_paper_accepted(doi)
+    if new_doi is not None:
+        prop = pap_prop.NotionPropMaker().from_doi(new_doi)
+        result_create= db_notion.notion.pages.create(parent={"database_id":db_notion.database_id}, properties=prop)
+        db_notion.notion.pages.update(page_id=result_create["id"],archived=True)
+        return result_create
+    else:
+        return None
+# ---------------------------------------------------------------------------
+# bib ファイルを作る
+def _make_bibfile_from_lists(database: papnt.database.Database, target: str,
+                              propnames: dict,list_page_prop_papers:list[dict], dir_save_bib: str):
+    propname_to_bibname = {val: key for key, val in propnames.items()}
+    filter = {'property': propnames['output_target'],
+              'multi_select': {'contains': target}}
+    entries = [pap_pr2en.notionprop_to_entry(record['properties'], propname_to_bibname)
+               for record in list_page_prop_papers]
+
+    bib_db = bib_parser.BibDatabase()
+    bib_db.entries = entries
+    writer = bib_parser.BibTexWriter()
+    with open(f'{dir_save_bib}/{target}.bib', 'w') as bibfile:
+        bibfile.write(writer.write(bib_db))
+#-----------------------------------------------------------------------------
 class _Papers_List(ft.SearchBar):
     def __init__(self, input_list: list, add_list):
         """bibに追加する論文を選択するための入力フォーム
@@ -543,6 +595,7 @@ class view_bib_maker(ft.View):
             new_paper (dict): 追加する論文の情報。notion.createに渡す辞書
         """
         self._input_Paper_List.add_new_props(new_paper)
+
     # --------------------------------------------------
     # select_prop_flag用の関数;
     def _change_prop_name(self, propname: str) -> None:
@@ -645,6 +698,7 @@ class view_bib_maker(ft.View):
         self.update()
         bib_name = self._Bib_Name.value
         items: type[_Text_Paper]
+        list_add_bib_papers:list[dict]=[]
         for (
             items
         ) in (
@@ -670,22 +724,28 @@ class view_bib_maker(ft.View):
                     self.database.update(notion_page["id"], next_prop)
                 except:
                     import sys
-
                     exc = sys.exc_info()
                     print(str(exc[1]))
                     self.run_button.text = str(exc[1])
                     self.run_button.style = ft.ButtonStyle(bgcolor=ft.colors.RED)
                     self.update()
-                print("reached")
-
+                    return
+        #--------------------------------------------------------------------------------
+        # arXivの論文を加える場合、アクセプトされているかを調べる;
+            page_arXiv_update= _return_page_prop_accepted_paper(notion_page[self.__notion_configs["propnames"]["doi"]],self.database)
+            if page_arXiv_update is not None:
+                notion_page=page_arXiv_update
+            list_add_bib_papers.append(notion_page)
         """Make BIB file including reference information from database"""
+
         try:
-            papnt.mainfunc.make_bibfile_from_records(
-                self.database,
-                bib_name,
-                self.__notion_configs["propnames"],
-                self.__notion_configs["misc"]["dir_save_bib"],
-            )
+            _make_bibfile_from_lists(self.database,bib_name,self.__notion_configs["propnames"],list_add_bib_papers,self.__notion_configs["misc"]["dir_save_bib"])
+            # papnt.mainfunc.make_bibfile_from_records(
+            #     self.database,
+            #     bib_name,
+            #     self.__notion_configs["propnames"],
+            #     self.__notion_configs["misc"]["dir_save_bib"],
+            # )
             papnt.mainfunc.make_abbrjson_from_bibpath(
                 f'{self.__notion_configs["misc"]["dir_save_bib"]}/{bib_name}.bib',
                 self.__notion_configs["abbr"],
