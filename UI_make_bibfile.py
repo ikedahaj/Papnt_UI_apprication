@@ -88,7 +88,6 @@ def _return_page_prop_accepted_paper(
             parent={"database_id": db_notion.database_id}, properties=prop
         )
         db_notion.notion.pages.update(page_id=result_create["id"], archived=True)
-        print(result_create["properties"]["DOI"])
         return result_create
     else:
         return None
@@ -758,12 +757,8 @@ class view_bib_maker(ft.View):
             )
             if page_arXiv_update is not None:
                 notion_page = page_arXiv_update
-                print(notion_page["properties"]["DOI"])
-            print(notion_page["properties"]["DOI"])
             list_add_bib_papers.append(notion_page)
         """Make BIB file including reference information from database"""
-        print("list[2]")
-        print(list_add_bib_papers[2]["properties"]["DOI"])
         try:
             _make_bibfile_from_lists(
                 self.database,
