@@ -33,6 +33,7 @@ def main(page: ft.Page):
                 print(page.route)
                 self.text = "bibtex 出力ページ"
                 self.style = None
+                self.update()
 
             self.on_click = to_bib_maker
 
