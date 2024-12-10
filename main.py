@@ -42,6 +42,14 @@ def main(page: ft.Page):
     view_input.set_button_to_appbar(button_move_window)
     page.views.append(view_input)
     page.update()
+    dlg=ft.AlertDialog(
+        title=ft.Text("arXiv論文の出版チェック"),
+        adaptive=True,
+        actions=[ft.TextButton("close",on_click=lambda e:page.close(dlg))],
+        content=ft.Column()
+    )
+    def on_click_open_dialog(e):
+        page.open(dlg)
 
     def view_pop(e):
         page.views.pop()
