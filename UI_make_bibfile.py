@@ -68,7 +68,7 @@ def _make_doi_arxiv(doi: str) -> str:
 
 
 # arXivのものを持ってきた時、アクセプトされているならdoiを、そうでないならnoneを返す;
-def _check_arXiv_paper_accepted(doi: str) -> dict | None:
+def _check_arXiv_paper_accepted(doi: str) -> str | None:
     doi2 = _make_doi_arxiv(doi)
     client = arxiv.Client()
     serch = arxiv.Search(id_list=[doi2])

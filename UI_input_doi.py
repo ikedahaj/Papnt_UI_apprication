@@ -12,21 +12,24 @@ import papnt.misc
 import papnt.database
 import papnt.notionprop
 
+import UI_make_bibfile as uibib
+
 # global list of added papers
 list_un_added_papers: list[dict] = []
+
+_dbinfo = papnt.database.DatabaseInfo()
+_database = papnt.database.Database(_dbinfo)
+_path_config = papnt.__path__[0] + "/config.ini"
+_config = papnt.misc.load_config(_path_config)
 
 
 # doiからnotionに論文情報を追加する;
 def __create_records_from_doi(doi: str):
-    dbinfo = papnt.database.DatabaseInfo()
-    database = papnt.database.Database(dbinfo)
-    path_config = papnt.__path__[0] + "/config.ini"
-    config = papnt.misc.load_config(path_config)
-    prop = papnt.notionprop.NotionPropMaker().from_doi(doi, config["propnames"])
+    prop = papnt.notionprop.NotionPropMaker().from_doi(doi, _config["propnames"])
     prop |= {"info": {"checkbox": True}}
     try:
-        result_create = database.notion.pages.create(
-            parent={"database_id": database.database_id}, properties=prop
+        result_create = _database.notion.pages.create(
+            parent={"database_id": _database.database_id}, properties=prop
         )
     except Exception as e:
         print(str(e))
@@ -57,23 +60,22 @@ def __format_doi(doi: str) -> str:
 class _Edit_Database(ft.Row):
     def __init__(self):
         super().__init__()
-        self.__ED_path_config = papnt.__path__[0] + "/config.ini"
-        self.config = configparser.ConfigParser(
+        self.__ED_config = configparser.ConfigParser(
             comment_prefixes="/", allow_no_value=True
         )
-        self.config.read(self.__ED_path_config)
+        self.__ED_config.read(_path_config)
         self.__ED_text_tokenkey = ft.Text(
             value=(
                 None
-                if self.config["database"]["tokenkey"] == "''"
-                else self.config["database"]["tokenkey"]
+                if self.__ED_config["database"]["tokenkey"] == "''"
+                else self.__ED_config["database"]["tokenkey"]
             )
         )
         self.__ED_text_database_id = ft.Text(
             value=(
                 None
-                if self.config["database"]["database_id"] == "''"
-                else self.config["database"]["database_id"]
+                if self.__ED_config["database"]["database_id"] == "''"
+                else self.__ED_config["database"]["database_id"]
             )
         )
         self.__ED_buttun_edit = ft.FloatingActionButton(
@@ -118,10 +120,10 @@ class _Edit_Database(ft.Row):
         self.__ED_text_database_id.visible = True
         self.__ED_text_tokenkey.visible = True
         self.__ED_buttun_edit.visible = True
-        self.config["database"]["database_id"] = self.__ED_text_database_id.value
-        self.config["database"]["tokenkey"] = self.__ED_text_tokenkey.value
-        with open(self.__ED_path_config, "w") as configfile:
-            self.config.write(configfile, True)
+        self.__ED_config["database"]["database_id"] = self.__ED_text_database_id.value
+        self.__ED_config["database"]["tokenkey"] = self.__ED_text_tokenkey.value
+        with open(self._path_config, "w") as configfile:
+            self.__ED_config.write(configfile, True)
         self.update()
 
 
@@ -131,9 +133,15 @@ class _Edit_Database(ft.Row):
 #       2.テキストを消すボタン
 #       3.１行だけ実行するボタン　がある;
 class _Editable_Text(ft.Row):
-    def __init__(self, input_value: str):
+    def __init__(
+        self,
+        input_value: str,
+        page_id: str | None = None,
+        flag_show_button: bool = True,
+    ):
         super().__init__()
         self.value = input_value
+        self.content_page_id = page_id
         self.__ET_text = ft.Text()
         self.__ET_text.value = input_value
         self.__ET_state_icon = ft.Icon()
@@ -155,13 +163,16 @@ class _Editable_Text(ft.Row):
         self.__ET_text_input = ft.TextField(
             value=self.value, on_submit=self.__ET_clicked_done_edit, visible=False
         )
-        self.controls = [
-            self.__ET_state_icon,
-            self.__ET_text,
-            self.__ET_buttons_plain_text,
-            self.__ET_text_input,
-            self.__ET_button_done_edit,
-        ]
+        if flag_show_button:
+            self.controls = [
+                self.__ET_state_icon,
+                self.__ET_text,
+                self.__ET_buttons_plain_text,
+                self.__ET_text_input,
+                self.__ET_button_done_edit,
+            ]
+        else:
+            self.controls = [self.__ET_state_icon, self.__ET_text]
 
     def __ET_switch_icon_and_progress(
         self, mode: typing.Literal["Icon", "Progress bar"]
@@ -199,7 +210,7 @@ class _Editable_Text(ft.Row):
 
     def update_value(
         self,
-        mode: typing.Literal["processing", "error", "succeed", "warn"],
+        mode: typing.Literal["processing", "error", "succeed", "warn", "new"],
         input_value: str = "",
     ):
         """ETの文章を実行時に変える
@@ -237,6 +248,10 @@ class _Editable_Text(ft.Row):
                 change_text(input_value)
                 self.__ET_state_icon.name = ft.icons.WARNING
                 self.__ET_state_icon.color = ft.colors.YELLOW
+            case "new":
+                change_text(input_value)
+                self.__ET_state_icon.name = ft.icons.FIBER_NEW
+                self.__ET_state_icon.color = ft.colors.GREEN
         self.update()
 
 
@@ -255,10 +270,9 @@ def _run_papnt_doi(now_text: _Editable_Text):
     now_text.update()
     now_text.update_value("processing")
     now_text.update()
-    database = papnt.database.Database(papnt.database.DatabaseInfo())
     serch_flag = {"filter": {"property": "DOI", "rich_text": {"equals": doi}}}
-    serch_flag["database_id"] = database.database_id
-    response = database.notion.databases.query(**serch_flag)
+    serch_flag["database_id"] = _database.database_id
+    response = _database.notion.databases.query(**serch_flag)
     if len(response["results"]) != 0:
         now_text.update_value("warn", "Already added! " + doi)
         return
@@ -272,9 +286,74 @@ def _run_papnt_doi(now_text: _Editable_Text):
         now_text.update_value("succeed", "Done " + doi)
 
 
+def _update_accepted_arXiv_paper(new_text: type[_Editable_Text]):
+    """
+    arXivの論文が他で出版されている場合、notionの値を更新する
+    入力の .data に page_id を入れておく。
+
+    Args:
+        new_text (type[_Editable_Text]): アップデートするarXivの論文が入った
+    """
+    doi = new_text.value
+    new_text.update_value("processing")
+    try:
+        print(new_text.value)
+        new_doi = uibib._check_arXiv_paper_accepted(doi)
+    except:
+        exc = sys.exc_info()
+        new_text.update_value(mode="error", input_value="Error: " + str(exc[1]))
+        print()
+        return
+    if new_doi is None:
+        new_text.update_value(mode="succeed", input_value=doi)
+        return
+    else:
+        try:
+            prop = papnt.notionprop.NotionPropMaker().from_doi(
+                new_doi, _config["propnames"]
+            )
+            prop |= {"info": {"checkbox": True}}
+            _database.update(new_text.content_page_id, prop)
+            new_text.update_value(mode="new",input_value="出版論文: "+new_doi)
+        except:
+            print("prop")
+            exc = sys.exc_info()
+            new_text.update_value(mode="error", input_value="Error: " + str(exc[1]))
+
+    pass
+
+
+def _check_arXiv_published(dialog_arXiv_check):
+    """arXivの論文のうちpublishされたものの情報を更新する
+
+    Args:
+        dialog_arXiv_check (ft.Dialog): ここで得た結果を載せる領域
+    """
+    filters = {
+        "property": _config["propnames"]["journal"],
+        "select": {"equals": "arXiv"},
+    }
+    response = _database.notion.databases.query(
+        database_id=_database.database_id, filter=filters
+    )
+    if len(response["results"]) == 0:
+        dialog_arXiv_check.content.controls.append(ft.Text("No arXiv paper"))
+        dialog_arXiv_check.update()
+        return
+    # print(response)
+    for pages in response["results"]:
+        doi = uibib._access_notion_prop_value(pages, _config["propnames"]["doi"])
+        page_id = pages["id"]
+        dialog_arXiv_check.content.controls.append(_Editable_Text(doi, page_id,False))
+    dialog_arXiv_check.update()
+    for each_text in dialog_arXiv_check.content.controls:
+        _update_accepted_arXiv_paper(each_text)
+    pass
+
+
 # このページの内容;
 class View_input_doi(ft.View):
-    def __init__(self):
+    def __init__(self, dialog_arXiv_check):
         super().__init__()
 
         def add_clicked(e):
@@ -298,7 +377,10 @@ class View_input_doi(ft.View):
         def run_clicked(e):
             for input_doi in list_doi.controls:
                 _run_papnt_doi(input_doi)
-
+        def on_clicked_check_arXiv(e):
+            dialog_arXiv_check.open_dialog()
+            # self.update()
+            _check_arXiv_published(dialog_arXiv_check)
         self.route = "/"
         self.auto_scroll = True
         input_text_doi = ft.TextField(
@@ -314,6 +396,10 @@ class View_input_doi(ft.View):
         delete_button = ft.FloatingActionButton(
             icon=ft.icons.DELETE, on_click=delete_clicked
         )
+        import pathlib
+        img=ft.Image(src=str(pathlib.Path.cwd())+"/arxiv-logomark-small.svg",fit=ft.ImageFit.CONTAIN,width=30,height=30)
+        arXiv_check_button=ft.FloatingActionButton(content=ft.Container(img),tooltip="arXivの論文が出版されている場合、notionの情報を更新する",on_click=on_clicked_check_arXiv)
+        # arXiv_check_button=ft.IconButton(icon=ft.icons.ABC)
         list_doi = ft.Column(scroll=ft.ScrollMode.HIDDEN, expand=True)
         # 画面に追加する;
 
@@ -329,7 +415,7 @@ class View_input_doi(ft.View):
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             )
         )
-        self.controls.append(ft.Row([run_button, delete_button]))
+        self.controls.append(ft.Row([run_button, delete_button,arXiv_check_button]))
         self.controls.append(list_doi)
 
     def set_button_to_appbar(self, button):

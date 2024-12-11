@@ -36,21 +36,27 @@ def main(page: ft.Page):
                 self.update()
 
             self.on_click = to_bib_maker
+    class Dialog(ft.AlertDialog):
+        def __init__(self, modal = False, title = None, content = None, actions = None, bgcolor = None, elevation = None, icon = None, open = False, title_padding = None, content_padding = None, actions_padding = None, actions_alignment = None, shape = None, inset_padding = None, icon_padding = None, action_button_padding = None, surface_tint_color = None, shadow_color = None, icon_color = None, scrollable = None, actions_overflow_button_spacing = None, alignment = None, content_text_style = None, title_text_style = None, clip_behavior = None, semantics_label = None, on_dismiss = None, ref = None, disabled = None, visible = None, data = None, adaptive = None):
+            super().__init__(modal, title, content, actions, bgcolor, elevation, icon, open, title_padding, content_padding, actions_padding, actions_alignment, shape, inset_padding, icon_padding, action_button_padding, surface_tint_color, shadow_color, icon_color, scrollable, actions_overflow_button_spacing, alignment, content_text_style, title_text_style, clip_behavior, semantics_label, on_dismiss, ref, disabled, visible, data, adaptive)
+            self.on_dismiss=self.clean_dismissed
+        def open_dialog(self):
+            page.open(self)
+        def clean_dismissed(self,e):
+            self.content=ft.Column()
 
+    dialog_arXiv_check=Dialog(
+        title=ft.Text("arXiv論文の出版チェック"),
+        adaptive=True,
+        actions=[ft.TextButton("close",on_click=lambda e:page.close(dialog_arXiv_check))],
+        content=ft.Column()
+    )
     button_move_window = Button_move_window()
-    view_input = UI_input_doi.View_input_doi()
+    view_input = UI_input_doi.View_input_doi(dialog_arXiv_check)
     view_input.set_button_to_appbar(button_move_window)
     page.views.append(view_input)
     page.update()
-    dlg=ft.AlertDialog(
-        title=ft.Text("arXiv論文の出版チェック"),
-        adaptive=True,
-        actions=[ft.TextButton("close",on_click=lambda e:page.close(dlg))],
-        content=ft.Column()
-    )
-    def on_click_open_dialog(e):
-        page.open(dlg)
-
+    page.theme_mode=ft.ThemeMode.LIGHT
     def view_pop(e):
         page.views.pop()
         top_view = page.views[-1]
