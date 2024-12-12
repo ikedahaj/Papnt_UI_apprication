@@ -2,6 +2,7 @@
 import time
 import typing
 import sys
+import os
 
 import flet as ft
 import configparser
@@ -305,7 +306,7 @@ def _update_accepted_arXiv_paper(new_text: type[_Editable_Text]):
         print()
         return
     if new_doi is None:
-        new_text.update_value(mode="succeed", input_value=doi)
+        new_text.update_value(mode="succeed", input_value="no change: " + doi)
         return
     else:
         try:
@@ -314,7 +315,7 @@ def _update_accepted_arXiv_paper(new_text: type[_Editable_Text]):
             )
             prop |= {"info": {"checkbox": True}}
             _database.update(new_text.content_page_id, prop)
-            new_text.update_value(mode="new",input_value="出版論文: "+new_doi)
+            new_text.update_value(mode="new", input_value="出版論文: " + new_doi)
         except:
             print("prop")
             exc = sys.exc_info()
@@ -344,7 +345,7 @@ def _check_arXiv_published(dialog_arXiv_check):
     for pages in response["results"]:
         doi = uibib._access_notion_prop_value(pages, _config["propnames"]["doi"])
         page_id = pages["id"]
-        dialog_arXiv_check.content.controls.append(_Editable_Text(doi, page_id,False))
+        dialog_arXiv_check.content.controls.append(_Editable_Text(doi, page_id, False))
     dialog_arXiv_check.update()
     for each_text in dialog_arXiv_check.content.controls:
         _update_accepted_arXiv_paper(each_text)
@@ -377,10 +378,12 @@ class View_input_doi(ft.View):
         def run_clicked(e):
             for input_doi in list_doi.controls:
                 _run_papnt_doi(input_doi)
+
         def on_clicked_check_arXiv(e):
             dialog_arXiv_check.open_dialog()
             # self.update()
             _check_arXiv_published(dialog_arXiv_check)
+
         self.route = "/"
         self.auto_scroll = True
         input_text_doi = ft.TextField(
@@ -396,9 +399,18 @@ class View_input_doi(ft.View):
         delete_button = ft.FloatingActionButton(
             icon=ft.icons.DELETE, on_click=delete_clicked
         )
-        import pathlib
-        img=ft.Image(src=str(pathlib.Path.cwd())+"/arxiv-logomark-small.svg",fit=ft.ImageFit.CONTAIN,width=30,height=30)
-        arXiv_check_button=ft.FloatingActionButton(content=ft.Container(img),tooltip="arXivの論文が出版されている場合、notionの情報を更新する",on_click=on_clicked_check_arXiv)
+        img = ft.Image(
+            src=os.path.dirname(os.path.abspath(__file__))
+            + "/arxiv-logomark-small.svg",
+            fit=ft.ImageFit.CONTAIN,
+            width=30,
+            height=30,
+        )
+        arXiv_check_button = ft.FloatingActionButton(
+            content=ft.Container(img),
+            tooltip="arXivの論文が出版されている場合、notionの情報を更新する",
+            on_click=on_clicked_check_arXiv,
+        )
         # arXiv_check_button=ft.IconButton(icon=ft.icons.ABC)
         list_doi = ft.Column(scroll=ft.ScrollMode.HIDDEN, expand=True)
         # 画面に追加する;
@@ -415,7 +427,7 @@ class View_input_doi(ft.View):
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             )
         )
-        self.controls.append(ft.Row([run_button, delete_button,arXiv_check_button]))
+        self.controls.append(ft.Row([run_button, delete_button, arXiv_check_button]))
         self.controls.append(list_doi)
 
     def set_button_to_appbar(self, button):
