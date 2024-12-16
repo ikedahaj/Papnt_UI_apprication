@@ -543,7 +543,7 @@ class _Text_Paper(ft.Row):
         self.__TP_delete_button.bgcolor = ft.colors.GREEN
         self.__TP_delete_button.icon = ft.icons.RUN_CIRCLE
         self.update()
-        self.__TP_add_to_input_list(self.data)
+        self.__TP_add_to_input_list(self.data,self)
         self.clean()
 
 
@@ -598,8 +598,13 @@ class view_bib_maker(ft.View):
         self.select_prop_flag.options.insert(0, ft.dropdown.Option(key="Name"))
         self._input_Paper_List.bar_leading = self.select_prop_flag
         # 要素を画面に追加;
+        def on_click_tb(e):
+            self.text_bu.text=str(len(self.Paper_list.controls))
+            self.update()
+        self.text_bu=ft.TextButton(text="T",on_click=on_click_tb)
         self.controls.append(self._input_Paper_List)
         self.controls.append(self.run_button)
+        self.controls.append(self.text_bu)
         self.controls.append(self.Paper_list)
 
     # ----------------------------------------
@@ -630,9 +635,10 @@ class view_bib_maker(ft.View):
     # ---------------------------------------------------
     # 候補のテキストを追加する;
     def _add_Paper_list(self, text_value, notion_result: dict):
-        def __clicked_delete_text(page_prop: dict):
+        def __clicked_delete_text(page_prop: dict,item_self:_Text_Paper):
             self._input_Paper_List.add_new_props(page_prop)
             self._delete_Cite_in_prop_from_notion(page_prop)
+            self.Paper_list.controls.remove(item_self)
 
         new_text_cl = _Text_Paper(text_value, notion_result, __clicked_delete_text)
         self.Paper_list.controls.insert(0, new_text_cl)
