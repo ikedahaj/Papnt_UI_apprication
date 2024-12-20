@@ -354,7 +354,7 @@ def _check_arXiv_published(dialog_arXiv_check):
 
 # このページの内容;
 class View_input_doi(ft.View):
-    def __init__(self, dialog_arXiv_check):
+    def __init__(self, dialog_arXiv_check, appbar_actions: list):
         super().__init__()
 
         def add_clicked(e):
@@ -419,6 +419,7 @@ class View_input_doi(ft.View):
             leading=ft.Icon(ft.icons.INPUT),
             title=ft.Text("論文追加"),
             bgcolor=ft.colors.SURFACE_VARIANT,
+            actions=appbar_actions,
         )
         self.controls.append(_Edit_Database())
         self.controls.append(
@@ -431,4 +432,7 @@ class View_input_doi(ft.View):
         self.controls.append(list_doi)
 
     def set_button_to_appbar(self, button):
-        self.appbar.actions = [button]
+        if len(self.appbar.actions) == 0:
+            self.appbar.actions = [button]
+        else:
+            self.appbar.actions.append(button)

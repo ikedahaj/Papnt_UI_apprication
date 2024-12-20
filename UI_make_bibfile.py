@@ -77,13 +77,13 @@ def _check_arXiv_paper_accepted(doi: str) -> str | None:
 
 
 def _return_page_prop_accepted_paper(
-    doi: str, db_notion: papnt.database.Database,propnames:dict
+    doi: str, db_notion: papnt.database.Database, propnames: dict
 ) -> dict | None:
     if not "arXiv" in doi:
         return None
     new_doi = _check_arXiv_paper_accepted(doi)
     if new_doi is not None:
-        prop = pap_prop.NotionPropMaker().from_doi(new_doi,propnames)
+        prop = pap_prop.NotionPropMaker().from_doi(new_doi, propnames)
         result_create = db_notion.notion.pages.create(
             parent={"database_id": db_notion.database_id}, properties=prop
         )
@@ -543,15 +543,15 @@ class _Text_Paper(ft.Row):
         self.__TP_delete_button.bgcolor = ft.colors.GREEN
         self.__TP_delete_button.icon = ft.icons.RUN_CIRCLE
         self.update()
-        self.__TP_add_to_input_list(self.data,self)
+        self.__TP_add_to_input_list(self.data, self)
         self.clean()
 
 
 class view_bib_maker(ft.View):
-    def __init__(self):
+    def __init__(self, appbar_actions: list):
         super().__init__()
         self.route = "/make_bib_file"
-        self.appbar = ft.AppBar(title=ft.Text("make_bib_file"))
+        self.appbar = ft.AppBar(title=ft.Text("make_bib_file"), actions=appbar_actions)
 
         # コンフィグファイルとnotionデータベースの準備;
         path_config = papnt.__path__[0] + "/config.ini"
@@ -630,7 +630,7 @@ class view_bib_maker(ft.View):
     # ---------------------------------------------------
     # 候補のテキストを追加する;
     def _add_Paper_list(self, text_value, notion_result: dict):
-        def __clicked_delete_text(page_prop: dict,item_self:_Text_Paper):
+        def __clicked_delete_text(page_prop: dict, item_self: _Text_Paper):
             self._input_Paper_List.add_new_props(page_prop)
             self._delete_Cite_in_prop_from_notion(page_prop)
             self.Paper_list.controls.remove(item_self)
@@ -754,7 +754,8 @@ class view_bib_maker(ft.View):
                 _access_notion_prop_value(
                     notion_page, self.__notion_configs["propnames"]["doi"]
                 ),
-                self.database,self.__notion_configs["propnames"]
+                self.database,
+                self.__notion_configs["propnames"],
             )
             if page_arXiv_update is not None:
                 notion_page = page_arXiv_update
