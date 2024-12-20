@@ -598,13 +598,8 @@ class view_bib_maker(ft.View):
         self.select_prop_flag.options.insert(0, ft.dropdown.Option(key="Name"))
         self._input_Paper_List.bar_leading = self.select_prop_flag
         # 要素を画面に追加;
-        def on_click_tb(e):
-            self.text_bu.text=str(len(self.Paper_list.controls))
-            self.update()
-        self.text_bu=ft.TextButton(text="T",on_click=on_click_tb)
         self.controls.append(self._input_Paper_List)
         self.controls.append(self.run_button)
-        self.controls.append(self.text_bu)
         self.controls.append(self.Paper_list)
 
     # ----------------------------------------
