@@ -63,7 +63,7 @@ def _make_doi_arxiv(doi: str) -> str:
 
 
 # arXivのものを持ってきた時、アクセプトされているならdoiを、そうでないならnoneを返す;
-def _check_arXiv_paper_accepted(doi: str) -> str | None:
+def check_arXiv_paper_accepted(doi: str) -> str | None:
     doi2 = _make_doi_arxiv(doi)
     client = arxiv.Client()
     serch = arxiv.Search(id_list=[doi2])
@@ -76,7 +76,7 @@ def _return_page_prop_accepted_paper(
 ) -> dict | None:
     if not "arXiv" in doi:
         return None
-    new_doi = _check_arXiv_paper_accepted(doi)
+    new_doi = check_arXiv_paper_accepted(doi)
     if new_doi is not None:
         prop = pap_prop.NotionPropMaker().from_doi(new_doi, propnames)
         result_create = db_notion.notion.pages.create(
