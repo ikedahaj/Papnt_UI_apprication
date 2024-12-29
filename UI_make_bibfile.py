@@ -18,105 +18,7 @@ import papnt.mainfunc
 import papnt.notionprop as pap_prop
 import papnt.prop2entry as pap_pr2en
 
-
-def _access_notion_prop(value_props):
-    mode = value_props["type"]
-    match mode:
-        case "title":
-            return value_props["title"][0]["text"]["content"]
-        case "select":
-            return value_props["select"]["name"]
-        case "multi_select":
-            connected_lists = ""
-            for name in value_props["multi_select"]:
-                connected_lists += name["name"]
-                connected_lists += ","
-            return connected_lists
-        case "rich_text":
-            out_val = value_props["rich_text"]
-            return out_val[0]["plain_text"] if len(out_val) > 0 else None
-        case "number":
-            return value_props["number"]
-        case "url":
-            return value_props["url"]
-        case _:
-            raise ValueError("Invalid mode")
-
-
-def _access_notion_prop_value(prop_page: dict, prop: str) -> str:
-    """notionのページから、propの値を返す
-
-    Args:
-        prop_page (dict): notionのページ."results"の値
-        prop (string): notionのプロパティ名.notion側のタイトル
-
-    Returns:
-        string: 入力したページの値
-    """
-    page_prop = prop_page["properties"]
-    return _access_notion_prop(page_prop[prop])
-
-
-# ----------------------------------------------------------------------------
-# arXiv更新用関数;
-# doi整形;
-def _make_doi_arxiv(doi: str) -> str:
-    sp = doi.split("arXiv")
-    if sp[1][0] == "." or sp[1][0] == ":":
-        sp[1] = sp[1][1:]
-    return sp[1]
-
-
-# arXivのものを持ってきた時、アクセプトされているならdoiを、そうでないならnoneを返す;
-def _check_arXiv_paper_accepted(doi: str) -> str | None:
-    doi2 = _make_doi_arxiv(doi)
-    client = arxiv.Client()
-    serch = arxiv.Search(id_list=[doi2])
-    reslut = next(client.results(serch))
-    return reslut.doi
-
-
-def _return_page_prop_accepted_paper(
-    doi: str, db_notion: papnt.database.Database, propnames: dict
-) -> dict | None:
-    if not "arXiv" in doi:
-        return None
-    new_doi = _check_arXiv_paper_accepted(doi)
-    if new_doi is not None:
-        prop = pap_prop.NotionPropMaker().from_doi(new_doi, propnames)
-        result_create = db_notion.notion.pages.create(
-            parent={"database_id": db_notion.database_id}, properties=prop
-        )
-        db_notion.notion.pages.update(page_id=result_create["id"], archived=True)
-        return result_create
-    else:
-        return None
-
-
-# ---------------------------------------------------------------------------
-# bib ファイルを作る
-def _make_bibfile_from_lists(
-    database: papnt.database.Database,
-    target: str,
-    propnames: dict,
-    list_page_prop_papers: list[dict],
-    dir_save_bib: str,
-):
-    propname_to_bibname = {val: key for key, val in propnames.items()}
-    filter = {
-        "property": propnames["output_target"],
-        "multi_select": {"contains": target},
-    }
-    entries = [
-        pap_pr2en.notionprop_to_entry(record["properties"], propname_to_bibname)
-        for record in list_page_prop_papers
-    ]
-
-    bib_db = bibtexparser.bibdatabase.BibDatabase()
-    bib_db.entries = entries
-    writer = bibtexparser.bwriter.BibTexWriter()
-    with open(f"{dir_save_bib}/{target}.bib", "w") as bibfile:
-        bibfile.write(writer.write(bib_db))
+import expand_papnt
 
 
 # -----------------------------------------------------------------------------
@@ -136,7 +38,7 @@ class _Papers_List(ft.SearchBar):
             controls=[
                 ft.ListTile(
                     title=ft.Text(
-                        _access_notion_prop_value(name, self.__PL_select_flag)
+                        expand_papnt.access_notion_prop_value(name, self.__PL_select_flag)
                     ),
                     data=name,
                     on_click=self.__close_anchor,
@@ -173,7 +75,7 @@ class _Papers_List(ft.SearchBar):
             new_controls.append(
                 ft.ListTile(
                     title=ft.Text(
-                        _access_notion_prop_value(name, self.__PL_select_flag)
+                        expand_papnt.access_notion_prop_value(name, self.__PL_select_flag)
                     ),
                     on_click=self.__close_anchor,
                     data=name,
@@ -205,7 +107,7 @@ class _Papers_List(ft.SearchBar):
     def PL_change_prop_name(self, propname):
         self.__PL_select_flag = propname
         for name in self.__PL_listview.controls:
-            name.title.value = _access_notion_prop_value(name.data, propname)
+            name.title.value = expand_papnt.access_notion_prop_value(name.data, propname)
         self.update()
 
     def add_new_props(self, new_prop: dict):
@@ -214,7 +116,7 @@ class _Papers_List(ft.SearchBar):
             0,
             ft.ListTile(
                 title=ft.Text(
-                    _access_notion_prop_value(new_prop, self.__PL_select_flag)
+                    expand_papnt.access_notion_prop_value(new_prop, self.__PL_select_flag)
                 ),
                 on_click=self.__close_anchor,
                 data=new_prop,
@@ -530,7 +432,7 @@ class _Text_Paper(ft.Row):
         self.controls = [self.__TP_display_text, self.__TP_delete_button]
 
     def change_text(self, propname):
-        new_text = _access_notion_prop_value(self.data, propname)
+        new_text = expand_papnt.access_notion_prop_value(self.data, propname)
         self.value = new_text
         self.__TP_display_text.value = new_text
         self.update()
@@ -566,7 +468,7 @@ class view_bib_maker(ft.View):
         self.Paper_list = ft.Column(scroll=ft.ScrollMode.HIDDEN, expand=True)
         self._input_Paper_List = _Papers_List(self.results, self._add_Paper_list)
         self.run_button = ft.FilledButton(
-            "bibファイルを出力する", on_click=self.__makebib
+            "bibファイルを出力する", on_click=self.__onclick_makebib
         )
 
         # 基礎設定:データベースの設定;
@@ -695,98 +597,31 @@ class view_bib_maker(ft.View):
                 ]
             ):
                 self._add_Paper_list(
-                    _access_notion_prop_value(
+                    expand_papnt.access_notion_prop_value(
                         un_added_paper, self.select_prop_flag.value
                     ),
                     un_added_paper,
                 )
 
-    def __makebib(self, e):
-        """
-        候補に挙げられている論文から、
-        1. notion側にCite in プロパティを追加
-        2. bibファイルを出力
-        """
-        # notionのCite in にデータを追加する;
+    def __onclick_makebib(self, e):
+        # 実行中を表すUIの変更;
         self.run_button.text = "実行中..."
         self.run_button.style = ft.ButtonStyle(
             bgcolor=ft.colors.GREEN, shape=ft.RoundedRectangleBorder(radius=1)
         )
         self.update()
         bib_name = self._Bib_Name.value
-        items: type[_Text_Paper]
-        list_add_bib_papers: list[dict] = []
-        for (
-            items
-        ) in (
-            self.Paper_list.controls
-        ):  # ft.Row(controls=[ft.Text,ft.FloatingActionButton])
-            notion_page = items.get_notion_page()
-            # print(notion_page)
-            cite_in_items = [
-                {"name": cite_in_item["name"]}
-                for cite_in_item in notion_page["properties"][
-                    self.__notion_configs["propnames"]["output_target"]
-                ]["multi_select"]
-            ]
-            next_dict = {"name": bib_name}
-            if not next_dict in cite_in_items:
-                cite_in_items.append(next_dict)
-                next_prop = {
-                    self.__notion_configs["propnames"]["output_target"]: {
-                        "multi_select": cite_in_items
-                    }
-                }
-                try:
-                    self.database.update(notion_page["id"], next_prop)
-                except:
-                    import sys
-
-                    exc = sys.exc_info()
-                    print(str(exc[1]))
-                    self.run_button.text = str(exc[1])
-                    self.run_button.style = ft.ButtonStyle(bgcolor=ft.colors.RED)
-                    self.update()
-                    return
-            # --------------------------------------------------------------------------------
-            # arXivの論文を加える場合、アクセプトされているかを調べる;
-            page_arXiv_update = _return_page_prop_accepted_paper(
-                _access_notion_prop_value(
-                    notion_page, self.__notion_configs["propnames"]["doi"]
-                ),
-                self.database,
-                self.__notion_configs["propnames"],
-            )
-            if page_arXiv_update is not None:
-                notion_page = page_arXiv_update
-            list_add_bib_papers.append(notion_page)
-        """Make BIB file including reference information from database"""
+        list_papers=[items.get_notion_page() for items in self.Paper_list.controls]
         try:
-            _make_bibfile_from_lists(
-                self.database,
-                bib_name,
-                self.__notion_configs["propnames"],
-                list_add_bib_papers,
-                self.__notion_configs["misc"]["dir_save_bib"],
-            )
-            # papnt.mainfunc.make_bibfile_from_records(
-            #     self.database,
-            #     bib_name,
-            #     self.__notion_configs["propnames"],
-            #     self.__notion_configs["misc"]["dir_save_bib"],
-            # )
-            papnt.mainfunc.make_abbrjson_from_bibpath(
-                f'{self.__notion_configs["misc"]["dir_save_bib"]}/{bib_name}.bib',
-                self.__notion_configs["abbr"],
-            )
+            expand_papnt.makebib(bib_name,list_papers,self.__notion_configs,self.database)
         except:
             import sys
-
             exc = sys.exc_info()
             print(str(exc[1]))
             self.run_button.text = str(exc[1])
             self.run_button.style = ft.ButtonStyle(bgcolor=ft.colors.RED)
             self.update()
+            return
         self.run_button.style = None
         self.run_button.text = "bibファイルを出力する"
         self.update()

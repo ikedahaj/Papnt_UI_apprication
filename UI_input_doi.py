@@ -9,11 +9,13 @@ import configparser
 
 import papnt
 
+import papnt.mainfunc
 import papnt.misc
 import papnt.database
 import papnt.notionprop
 
 import UI_make_bibfile as uibib
+import expand_papnt
 
 # global list of added papers
 list_un_added_papers: list[dict] = []
@@ -38,7 +40,6 @@ def __create_records_from_doi(doi: str):
         raise ValueError(f"Error while updating record: {name}")
     else:
         list_un_added_papers.append(result_create)
-        # print(list_un_added_papers)
 
 
 # doiをフォーマットして、notion内の形式と合わせる;
@@ -303,25 +304,19 @@ def _update_accepted_arXiv_paper(new_text: type[_Editable_Text]):
     except:
         exc = sys.exc_info()
         new_text.update_value(mode="error", input_value="Error: " + str(exc[1]))
-        print()
+        print(str(exc[1]))
         return
     if new_doi is None:
         new_text.update_value(mode="succeed", input_value="no change: " + doi)
         return
     else:
         try:
-            prop = papnt.notionprop.NotionPropMaker().from_doi(
-                new_doi, _config["propnames"]
-            )
-            prop |= {"info": {"checkbox": True}}
-            _database.update(new_text.content_page_id, prop)
+            papnt.mainfunc._update_record_from_doi(_database,new_doi,new_text.content_page_id, _config["propnames"])
             new_text.update_value(mode="new", input_value="出版論文: " + new_doi)
         except:
-            print("prop")
             exc = sys.exc_info()
             new_text.update_value(mode="error", input_value="Error: " + str(exc[1]))
-
-    pass
+            print(str(exc[1]))
 
 
 def _check_arXiv_published(dialog_arXiv_check):
@@ -343,7 +338,7 @@ def _check_arXiv_published(dialog_arXiv_check):
         return
     # print(response)
     for pages in response["results"]:
-        doi = uibib._access_notion_prop_value(pages, _config["propnames"]["doi"])
+        doi = expand_papnt.access_notion_prop_value(pages, _config["propnames"]["doi"])
         page_id = pages["id"]
         dialog_arXiv_check.content.controls.append(_Editable_Text(doi, page_id, False))
     dialog_arXiv_check.update()
