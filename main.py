@@ -24,7 +24,7 @@ def main(page: ft.Page):
                 self.update()
                 if self.__view_make_bib is None:
                     self.__view_make_bib = UI_make_bibfile.view_bib_maker(
-                        appbar_buttons
+                        [button_change_theme]
                     )
                 else:
                     while len(UI_input_doi.list_un_added_papers) > 0:
@@ -148,7 +148,6 @@ def main(page: ft.Page):
             page.update()
 
     button_change_theme = switch_light_dark_theme()
-    appbar_buttons = [button_change_theme]
     dialog_arXiv_check = Dialog(
         title=ft.Text("arXiv論文の出版チェック"),
         adaptive=True,
@@ -158,7 +157,7 @@ def main(page: ft.Page):
         content=ft.Column(),
     )
     button_move_window = Button_move_window()
-    view_input = UI_input_doi.View_input_doi(dialog_arXiv_check, appbar_buttons)
+    view_input = UI_input_doi.View_input_doi(dialog_arXiv_check, [button_change_theme])
     view_input.set_button_to_appbar(button_move_window)
     page.views.append(view_input)
     page.update()
