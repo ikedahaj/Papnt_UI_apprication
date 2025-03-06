@@ -104,7 +104,7 @@ def _notionprop_to_entry_arXiv(notionprop: dict, propname_to_bibname: dict):
         journal="arXiv preprint "
         + pap_pr2en._extr_propvalue(props["doi"], "rich_text"),
         year=pap_pr2en._extr_propvalue(props["year"], "number"),
-        doi=pap_pr2en._extr_propvalue(props["doi"], "rich_text"),
+        # doi=pap_pr2en._extr_propvalue(props["doi"], "rich_text"),
     )
     return {key: val for key, val in entry.items() if val is not None}
 
