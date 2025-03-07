@@ -300,7 +300,7 @@ def _update_accepted_arXiv_paper(new_text: type[_Editable_Text]):
     new_text.update_value("processing")
     try:
         print(new_text.value)
-        new_doi =expand_papnt.check_arXiv_paper_accepted(doi)
+        new_doi = expand_papnt.check_arXiv_paper_accepted(doi)
     except:
         exc = sys.exc_info()
         new_text.update_value(mode="error", input_value="Error: " + str(exc[1]))
@@ -311,7 +311,9 @@ def _update_accepted_arXiv_paper(new_text: type[_Editable_Text]):
         return
     else:
         try:
-            papnt.mainfunc._update_record_from_doi(_database,new_doi,new_text.content_page_id, _config["propnames"])
+            papnt.mainfunc._update_record_from_doi(
+                _database, new_doi, new_text.content_page_id, _config["propnames"]
+            )
             new_text.update_value(mode="new", input_value="出版論文: " + new_doi)
         except:
             exc = sys.exc_info()

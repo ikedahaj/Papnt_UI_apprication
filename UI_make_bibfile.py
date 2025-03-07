@@ -38,7 +38,9 @@ class _Papers_List(ft.SearchBar):
             controls=[
                 ft.ListTile(
                     title=ft.Text(
-                        expand_papnt.access_notion_prop_value(name, self.__PL_select_flag)
+                        expand_papnt.access_notion_prop_value(
+                            name, self.__PL_select_flag
+                        )
                     ),
                     data=name,
                     on_click=self.__close_anchor,
@@ -75,7 +77,9 @@ class _Papers_List(ft.SearchBar):
             new_controls.append(
                 ft.ListTile(
                     title=ft.Text(
-                        expand_papnt.access_notion_prop_value(name, self.__PL_select_flag)
+                        expand_papnt.access_notion_prop_value(
+                            name, self.__PL_select_flag
+                        )
                     ),
                     on_click=self.__close_anchor,
                     data=name,
@@ -107,7 +111,9 @@ class _Papers_List(ft.SearchBar):
     def PL_change_prop_name(self, propname):
         self.__PL_select_flag = propname
         for name in self.__PL_listview.controls:
-            name.title.value = expand_papnt.access_notion_prop_value(name.data, propname)
+            name.title.value = expand_papnt.access_notion_prop_value(
+                name.data, propname
+            )
         self.update()
 
     def add_new_props(self, new_prop: dict):
@@ -116,7 +122,9 @@ class _Papers_List(ft.SearchBar):
             0,
             ft.ListTile(
                 title=ft.Text(
-                    expand_papnt.access_notion_prop_value(new_prop, self.__PL_select_flag)
+                    expand_papnt.access_notion_prop_value(
+                        new_prop, self.__PL_select_flag
+                    )
                 ),
                 on_click=self.__close_anchor,
                 data=new_prop,
@@ -611,11 +619,14 @@ class view_bib_maker(ft.View):
         )
         self.update()
         bib_name = self._Bib_Name.value
-        list_papers=[items.get_notion_page() for items in self.Paper_list.controls]
+        list_papers = [items.get_notion_page() for items in self.Paper_list.controls]
         try:
-            expand_papnt.makebib(bib_name,list_papers,self.__notion_configs,self.database)
+            expand_papnt.makebib(
+                bib_name, list_papers, self.__notion_configs, self.database
+            )
         except:
             import sys
+
             exc = sys.exc_info()
             print(str(exc[1]))
             self.run_button.text = str(exc[1])
