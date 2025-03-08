@@ -13,6 +13,9 @@ import papnt.mainfunc
 import papnt.notionprop as pap_prop
 import papnt.prop2entry as pap_pr2en
 
+# グローバル変数の宣言;
+G_List_Name_Tabs = ["全て", "完了", "未完了/エラー"]
+
 
 def _access_notion_prop(value_props):
     mode = value_props["type"]
@@ -136,7 +139,12 @@ def _make_bibfile_from_lists(
         bibfile.write(writer.write(bib_db))
 
 
-def makebib(bib_name:str, props_paper:list[dict], notion_configs:dict, database:papnt.database.Database):
+def makebib(
+    bib_name: str,
+    props_paper: list[dict],
+    notion_configs: dict,
+    database: papnt.database.Database,
+):
     """
     候補に挙げられている論文から、
     1. notion側にCite in プロパティを追加
