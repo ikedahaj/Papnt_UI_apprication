@@ -140,6 +140,7 @@ class _Editable_Text(ft.Row):
         input_value: str,
         page_id: str | None = None,
         flag_show_button: bool = True,
+        added=False
     ):
         super().__init__()
         self.value = input_value
@@ -175,7 +176,7 @@ class _Editable_Text(ft.Row):
             ]
         else:
             self.controls = [self.__ET_state_icon, self.__ET_text]
-
+        self.ET_added=added
     def __ET_switch_icon_and_progress(
         self, mode: typing.Literal["Icon", "Progress bar"]
     ):
@@ -246,6 +247,7 @@ class _Editable_Text(ft.Row):
                 change_text(input_value)
                 self.__ET_state_icon.name = ft.icons.DONE
                 self.__ET_state_icon.color = ft.colors.GREEN
+                self.ET_added=True
             case "warn":
                 change_text(input_value)
                 self.__ET_state_icon.name = ft.icons.WARNING
@@ -355,16 +357,16 @@ class View_input_doi(ft.View):
         super().__init__()
 
         def add_clicked(e):
-            list_doi.controls.insert(
+            self.list_doi.controls.insert(
                 0, _Editable_Text(input_value=input_text_doi.value)
             )
             input_text_doi.value = ""
-            list_doi.update()
+            self.list_doi.update()
             self.update()
             input_text_doi.focus()
 
         def delete_clicked(e):
-            list_doi.clean()
+            self.list_doi.clean()
             self.update()
             input_text_doi.focus()
 
@@ -373,7 +375,7 @@ class View_input_doi(ft.View):
             add_clicked(e)
 
         def run_clicked(e):
-            for input_doi in list_doi.controls:
+            for input_doi in self.list_doi.controls:
                 _run_papnt_doi(input_doi)
 
         def on_clicked_check_arXiv(e):
@@ -393,6 +395,10 @@ class View_input_doi(ft.View):
         run_button = ft.FloatingActionButton(
             icon=ft.icons.RUN_CIRCLE, on_click=run_clicked
         )
+        self.Tab_hold = ft.Tabs(
+            [ft.Tab(text) for text in expand_papnt.G_List_Name_Tabs],
+            on_change=self.Tab_on_change
+        )
         delete_button = ft.FloatingActionButton(
             icon=ft.icons.DELETE, on_click=delete_clicked
         )
@@ -409,7 +415,7 @@ class View_input_doi(ft.View):
             on_click=on_clicked_check_arXiv,
         )
         # arXiv_check_button=ft.IconButton(icon=ft.icons.ABC)
-        list_doi = ft.Column(scroll=ft.ScrollMode.HIDDEN, expand=True)
+        self.list_doi = ft.Column(scroll=ft.ScrollMode.HIDDEN, expand=True)
         # 画面に追加する;
 
         self.appbar = ft.AppBar(
@@ -426,7 +432,21 @@ class View_input_doi(ft.View):
             )
         )
         self.controls.append(ft.Row([run_button, delete_button, arXiv_check_button]))
-        self.controls.append(list_doi)
+        self.controls.append(self.Tab_hold)
+        self.controls.append(self.list_doi)
+    # --------------------------------------------------------
+    # Tab用の関数;
+    # Tabが切り替わった時に使う関数;
+    def Tab_on_change(self, e):
+        selected_index = self.Tab_hold.selected_index
+        item: type[_Editable_Text]
+        for item in self.list_doi.controls:
+            item.visible = (
+                selected_index == 0
+                or (selected_index == 1 and item.ET_added)
+                or (selected_index == 2 and not item.ET_added)
+            )
+        self.update()
 
     def set_button_to_appbar(self, button):
         if len(self.appbar.actions) == 0:
