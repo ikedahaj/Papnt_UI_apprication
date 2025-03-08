@@ -140,7 +140,7 @@ class _Editable_Text(ft.Row):
         input_value: str,
         page_id: str | None = None,
         flag_show_button: bool = True,
-        added=False
+        added=False,
     ):
         super().__init__()
         self.value = input_value
@@ -176,7 +176,8 @@ class _Editable_Text(ft.Row):
             ]
         else:
             self.controls = [self.__ET_state_icon, self.__ET_text]
-        self.ET_added=added
+        self.ET_added = added
+
     def __ET_switch_icon_and_progress(
         self, mode: typing.Literal["Icon", "Progress bar"]
     ):
@@ -247,7 +248,7 @@ class _Editable_Text(ft.Row):
                 change_text(input_value)
                 self.__ET_state_icon.name = ft.icons.DONE
                 self.__ET_state_icon.color = ft.colors.GREEN
-                self.ET_added=True
+                self.ET_added = True
             case "warn":
                 change_text(input_value)
                 self.__ET_state_icon.name = ft.icons.WARNING
@@ -397,7 +398,7 @@ class View_input_doi(ft.View):
         )
         self.Tab_hold = ft.Tabs(
             [ft.Tab(text) for text in expand_papnt.G_List_Name_Tabs],
-            on_change=self.Tab_on_change
+            on_change=self.Tab_on_change,
         )
         delete_button = ft.FloatingActionButton(
             icon=ft.icons.DELETE, on_click=delete_clicked
@@ -434,6 +435,7 @@ class View_input_doi(ft.View):
         self.controls.append(ft.Row([run_button, delete_button, arXiv_check_button]))
         self.controls.append(self.Tab_hold)
         self.controls.append(self.list_doi)
+
     # --------------------------------------------------------
     # Tab用の関数;
     # Tabが切り替わった時に使う関数;
