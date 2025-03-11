@@ -12,7 +12,6 @@ def main(page: ft.Page):
             super().__init__()
             self.text = "bibtex 出力ページ"
             self.__view_make_bib: type[UI_make_bibfile.view_bib_maker] | None = None
-            # self.BW_list_un_added_papers: list[dict] = []
 
             def to_bib_maker(e):
                 self.text = "ページ作成中..."
@@ -26,7 +25,9 @@ def main(page: ft.Page):
                     self.__view_make_bib = UI_make_bibfile.view_bib_maker(
                         [button_change_theme]
                     )
+                    UI_input_doi.list_un_added_papers.clear()
                 else:
+                    print(UI_input_doi.list_un_added_papers)
                     while len(UI_input_doi.list_un_added_papers) > 0:
                         self.__view_make_bib.add_new_paper_from_out(
                             UI_input_doi.list_un_added_papers.pop()
