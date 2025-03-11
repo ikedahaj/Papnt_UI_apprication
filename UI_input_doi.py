@@ -19,6 +19,8 @@ import expand_papnt
 
 # global list of added papers
 list_un_added_papers: list[dict] = []
+# global list of notion's paper's Name;
+list_notion_papers_name: list[str] = []
 
 _dbinfo = papnt.database.DatabaseInfo()
 _database = papnt.database.Database(_dbinfo)
@@ -30,14 +32,22 @@ _config = papnt.misc.load_config(_path_config)
 def __create_records_from_doi(doi: str):
     prop = papnt.notionprop.NotionPropMaker().from_doi(doi, _config["propnames"])
     prop |= {"info": {"checkbox": True}}
+    title=prop["Name"]["title"][0]["text"]["content"]
+    if title in list_notion_papers_name:
+        try:
+            response=_database.notion.databases.query(_dbinfo.database_id,filter={'property': "Name", 'rich_text':title })
+            result=response["results"]
+            raise ValueError(f"You have already added this paper. Publisher is: {expand_papnt.access_notion_prop_value(result,_config['propnames']['journal'])}")
+            return
+        except:
+            raise ValueError(f"You have already added this paper :{title}")
     try:
         result_create = _database.notion.pages.create(
             parent={"database_id": _database.database_id}, properties=prop
         )
     except Exception as e:
         print(str(e))
-        name = prop["Name"]["title"][0]["text"]["content"]
-        raise ValueError(f"Error while updating record: {name}")
+        raise ValueError(f"Error while updating record: {title}")
     else:
         list_un_added_papers.append(result_create)
 
@@ -435,6 +445,12 @@ class View_input_doi(ft.View):
         self.controls.append(ft.Row([run_button, delete_button, arXiv_check_button]))
         self.controls.append(self.Tab_hold)
         self.controls.append(self.list_doi)
+
+        response=_database.notion.databases.query(_dbinfo.database_id,filter={'property': 'info', 'checkbox': {'equals': True}})
+        result=response["results"]
+        for papers in result:
+            list_notion_papers_name.append(expand_papnt.access_notion_prop_value(papers,"Name"))
+
 
     # --------------------------------------------------------
     # Tab用の関数;
