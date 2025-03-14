@@ -14,7 +14,6 @@ import papnt.misc
 import papnt.database
 import papnt.notionprop
 
-import UI_make_bibfile as uibib
 import expand_papnt
 
 # global list of added papers
