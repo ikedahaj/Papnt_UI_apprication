@@ -35,6 +35,7 @@ def main(page: ft.Page):
 
                 page.views.append(self.__view_make_bib)
                 page.go(self.__view_make_bib.route)
+                self.__view_make_bib.do_after_added_this_Control()
                 print(page.route)
                 self.text = "bibtex 出力ページ"
                 self.style = None

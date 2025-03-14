@@ -136,7 +136,13 @@ class _Papers_List(ft.SearchBar):
 
 
 class _Bib_File_Name(ft.Row):
-    def __init__(self, text_list: list, add_Paper_List_New_Cite_in_prop):
+    def __init__(
+        self,
+        text_list: list,
+        add_Paper_List_New_Cite_in_prop,
+        config,
+        funk_enable_input,
+    ):
         """出力するbibファイルの候補を出して、ファイル名を入れる関数。
 
         Args:
@@ -146,7 +152,11 @@ class _Bib_File_Name(ft.Row):
         """
         super().__init__()
         # anchor=ft.SearchBar()
-        self.value = None
+        self.BFN_path_config = papnt.__path__[0] + "/config.ini"
+        self._config = config
+        self._config.read(self.BFN_path_config)
+        saved_filename = self._config["misc"].get("filename_save_bib")
+        self.value = saved_filename
         self.__funk_add_Paper_List_update_prop = add_Paper_List_New_Cite_in_prop
         self.__BFN_listview = ft.ListView()
         self.__text_list = text_list
@@ -172,20 +182,27 @@ class _Bib_File_Name(ft.Row):
         )
         self.controls = [self.__BFN_serBar, text, button]
         self.__BFN_visible_input()
-        # self.update()
+        self.BFN_flag_decided_file_name = (
+            (saved_filename is not None)
+            and (saved_filename != "''")
+            and (saved_filename != "")
+        )
+        self.BFN_funk_enable_input = funk_enable_input
 
     def __BFN_visible_input(self):
+        # 入力を受け入れる状態;
         self.controls[0].visible = True
         self.controls[1].visible = False
         self.controls[2].visible = False
 
     def __BFN_invisible_input(self):
+        # 入力を受け付けない状態;
         self.controls[0].visible = False
         self.controls[1].visible = True
         self.controls[2].visible = True
 
     def __BFN_update_listview(self, texts_list):
-        # self.__BFN_listview.clean()
+        # 入力候補を更新;
         new_controls = []
         for name in texts_list:
             new_controls.append(
@@ -226,7 +243,7 @@ class _Bib_File_Name(ft.Row):
 
     def __handle_submit(self, e):
         new_text = self.controls[0].value
-        if new_text not in self.__text_list:
+        if new_text not in self.__text_list and new_text is not None and new_text != "":
             self.__text_list.insert(0, new_text)
             self.__BFN_listview.controls.insert(
                 0, ft.ListTile(title=ft.Text(new_text), on_click=self.__close_anchor)
@@ -247,6 +264,15 @@ class _Bib_File_Name(ft.Row):
         self.update()
         self.value = new_text
         self.__funk_add_Paper_List_update_prop(self.value)
+        if new_text is None or new_text == "''" or new_text == "":
+            self.BFN_flag_decided_file_name = False
+        else:
+            self.BFN_flag_decided_file_name = True
+        self._config["misc"]["filename_save_bib"] = new_text
+        with open(self.BFN_path_config, "w") as configfile:
+            self._config.write(configfile, True)
+        self.BFN_funk_enable_input()
+        self.update()
 
     def __reset_anchor(self, e):
         # self.__BFN_serBar.controls=[self.__BFN_listview]
@@ -372,24 +398,23 @@ class _Get_Folder_Name(ft.SearchBar):
 
 
 class _Edit_Database(ft.Row):
-    def __init__(self):
+    def __init__(self, config, funk_enable_input):
         """bibファイルを出力するフォルダ名を入手する
         初期値はpapnt/config.iniから持ってくる
         """
         super().__init__()
         self.ED_path_config = papnt.__path__[0] + "/config.ini"
-        self.config = configparser.ConfigParser(
-            comment_prefixes="/", allow_no_value=True
-        )
-        self.config.read(self.ED_path_config)
+        self._config = config
+        self._config.read(self.ED_path_config)
+        saved_dirname = self._config["misc"]["dir_save_bib"]
         self.ED_text_dir_save_bibfile_decided = ft.Text(
-            value=self.config["misc"]["dir_save_bib"], expand=True
+            value=saved_dirname, expand=True
         )
         self.ED_button_open_edit = ft.FloatingActionButton(
             icon=ft.icons.EDIT, on_click=self.__ED_clicked_open_edit_view, mini=True
         )
         self.ED_text_dir_save_bibfile_input = _Get_Folder_Name(
-            self.ED_text_dir_save_bibfile_decided.value, self.__ED_clicked_done_edit
+            saved_dirname, self.__ED_clicked_done_edit
         )
         self.controls = [
             self.ED_text_dir_save_bibfile_decided,
@@ -397,6 +422,12 @@ class _Edit_Database(ft.Row):
             self.ED_text_dir_save_bibfile_input,
         ]
         self.ED_text_dir_save_bibfile_input.visible = False
+        self.ED_flag_decided_folder_name = (
+            (saved_dirname is not None)
+            and (saved_dirname != "''")
+            and (saved_dirname != "")
+        )
+        self.ED_enable_input = funk_enable_input
 
     def __ED_clicked_open_edit_view(self, e):
         self.ED_text_dir_save_bibfile_decided.visible = False
@@ -414,9 +445,12 @@ class _Edit_Database(ft.Row):
         self.ED_text_dir_save_bibfile_input.visible = False
         new_text = self.ED_text_dir_save_bibfile_input.value
         self.ED_text_dir_save_bibfile_decided.value = new_text
-        self.config["misc"]["dir_save_bib"] = new_text
+        self._config["misc"]["dir_save_bib"] = new_text
         with open(self.ED_path_config, "w") as configfile:
-            self.config.write(configfile, True)
+            self._config.write(configfile, True)
+        if new_text is not None:
+            self.ED_flag_decided_folder_name = True
+        self.ED_enable_input()
         self.update()
 
 
@@ -454,7 +488,6 @@ class _Text_Paper(ft.Row):
         self.__TP_delete_button.icon = ft.icons.RUN_CIRCLE
         self.update()
         self.__TP_add_to_input_list(self.data, self)
-        self.clean()
 
 
 class view_bib_maker(ft.View):
@@ -466,6 +499,9 @@ class view_bib_maker(ft.View):
         # コンフィグファイルとnotionデータベースの準備;
         path_config = papnt.__path__[0] + "/config.ini"
         self.__notion_configs = papnt.misc.load_config(path_config)
+        self._notion_config_simple = configparser.ConfigParser(
+            comment_prefixes="/", allow_no_value=True
+        )
 
         self.database = papnt.database.Database(papnt.database.DatabaseInfo())
         response = self.database.notion.databases.query(self.database.database_id)
@@ -490,11 +526,18 @@ class view_bib_maker(ft.View):
                 if not next_name["name"] in filename_list:
                     filename_list.append(next_name["name"])
         self._Bib_Name = _Bib_File_Name(
-            filename_list, self.add_Paper_List_New_Cite_in_prop
+            filename_list,
+            self.add_Paper_List_New_Cite_in_prop,
+            self._notion_config_simple,
+            self.enable_input_if_folder_and_file_name_are_decided,
+        )
+        self.edit_database = _Edit_Database(
+            self._notion_config_simple,
+            self.enable_input_if_folder_and_file_name_are_decided,
         )
         self.controls.append(
             ft.Row(
-                controls=[_Edit_Database(), self._Bib_Name],
+                controls=[self.edit_database, self._Bib_Name],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             )
         )
@@ -507,10 +550,26 @@ class view_bib_maker(ft.View):
         ]
         self.select_prop_flag.options.insert(0, ft.dropdown.Option(key="Name"))
         self._input_Paper_List.bar_leading = self.select_prop_flag
+        self._input_Paper_List.disabled = True
+        # self.cnt_button=ft.TextButton("cnt",on_click=self.on_click_cnt)
         # 要素を画面に追加;
         self.controls.append(self._input_Paper_List)
         self.controls.append(self.run_button)
         self.controls.append(self.Paper_list)
+    def do_after_added_this_Control(self):
+        self.enable_input_if_folder_and_file_name_are_decided()
+
+    def enable_input_if_folder_and_file_name_are_decided(self):
+        if (
+            self.edit_database.ED_flag_decided_folder_name
+            and self._Bib_Name.BFN_flag_decided_file_name
+        ):
+            self._input_Paper_List.disabled = False
+            self.run_button.disabled = False
+        else:
+            self._input_Paper_List.disabled = True
+            self.run_button.disabled = True
+        self.update()
 
     # ----------------------------------------
     # 外から新しいpropを渡す;
@@ -544,6 +603,7 @@ class view_bib_maker(ft.View):
             self._input_Paper_List.add_new_props(page_prop)
             self._delete_Cite_in_prop_from_notion(page_prop)
             self.Paper_list.controls.remove(item_self)
+            self.update()
 
         new_text_cl = _Text_Paper(text_value, notion_result, __clicked_delete_text)
         self.Paper_list.controls.insert(0, new_text_cl)
