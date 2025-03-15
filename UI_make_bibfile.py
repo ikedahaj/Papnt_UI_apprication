@@ -152,6 +152,7 @@ class _Bib_File_Name(ft.Row):
         """
         super().__init__()
         # anchor=ft.SearchBar()
+        self.__text_if_no_input="bibファイル名を入力してください"
         self.BFN_path_config = papnt.__path__[0] + "/config.ini"
         self._config = config
         self._config.read(self.BFN_path_config)
@@ -169,24 +170,29 @@ class _Bib_File_Name(ft.Row):
         self.__BFN_serBar = ft.SearchBar(
             view_elevation=4,
             divider_color=ft.colors.AMBER,
-            bar_hint_text="bibファイル名を入力",
-            view_hint_text="bibファイル名を入力",
+            bar_hint_text=self.__text_if_no_input,
+            view_hint_text=self.__text_if_no_input,
             on_change=self.__handle_change,
             on_submit=self.__handle_submit,
             on_tap=self.__handle_tap,
             controls=[self.__BFN_listview],
+            value=self.value
         )
-        text = ft.Text(visible=False, value="bibファイル名を入力")
+        text = ft.Text(visible=False, value=self.value)
         button = ft.FloatingActionButton(
             icon=ft.icons.EDIT, mini=True, on_click=self.__reset_anchor, visible=False
         )
         self.controls = [self.__BFN_serBar, text, button]
-        self.__BFN_visible_input()
         self.BFN_flag_decided_file_name = (
             (saved_filename is not None)
             and (saved_filename != "''")
             and (saved_filename != "")
         )
+        # print(self.BFN_flag_decided_file_name)
+        if self.BFN_flag_decided_file_name:
+            self.__BFN_invisible_input()
+        else:
+            self.__BFN_visible_input()
         self.BFN_funk_enable_input = funk_enable_input
 
     def __BFN_visible_input(self):
@@ -260,7 +266,7 @@ class _Bib_File_Name(ft.Row):
             self.__handle_submit(e)
             return
         self.__BFN_invisible_input()
-        self.controls[1].value = new_text
+        self.controls[1].value =self.__text_if_no_input if new_text==""else new_text
         self.update()
         self.value = new_text
         self.__funk_add_Paper_List_update_prop(self.value)
@@ -403,10 +409,12 @@ class _Edit_Database(ft.Row):
         初期値はpapnt/config.iniから持ってくる
         """
         super().__init__()
+        self.__text_if_no_input="bibファイルを出力するフォルダ名を入力してください"
         self.ED_path_config = papnt.__path__[0] + "/config.ini"
         self._config = config
         self._config.read(self.ED_path_config)
         saved_dirname = self._config["misc"]["dir_save_bib"]
+        saved_dirname = None if saved_dirname=="''" else saved_dirname
         self.ED_text_dir_save_bibfile_decided = ft.Text(
             value=saved_dirname, expand=True
         )
@@ -427,14 +435,19 @@ class _Edit_Database(ft.Row):
             and (saved_dirname != "''")
             and (saved_dirname != "")
         )
+        if not self.ED_flag_decided_folder_name:
+            self.ED_text_dir_save_bibfile_decided.visible=False
+            self.ED_button_open_edit.visible=False
+            self.ED_text_dir_save_bibfile_input.visible=True
         self.ED_enable_input = funk_enable_input
 
     def __ED_clicked_open_edit_view(self, e):
         self.ED_text_dir_save_bibfile_decided.visible = False
         self.ED_button_open_edit.visible = False
         self.ED_text_dir_save_bibfile_input.visible = True
+        now_text=None if self.ED_text_dir_save_bibfile_decided.value==self.__text_if_no_input else self.ED_text_dir_save_bibfile_decided.value
         self.ED_text_dir_save_bibfile_input.GFN_update_value(
-            self.ED_text_dir_save_bibfile_decided.value
+            now_text
         )
         self.ED_text_dir_save_bibfile_input.open_view()
         self.update()
@@ -451,6 +464,9 @@ class _Edit_Database(ft.Row):
         if new_text is not None:
             self.ED_flag_decided_folder_name = True
         self.ED_enable_input()
+        if new_text =="":
+            self.ED_text_dir_save_bibfile_decided.value=self.__text_if_no_input
+        print(self.ED_text_dir_save_bibfile_input.value)
         self.update()
 
 
@@ -511,7 +527,7 @@ class view_bib_maker(ft.View):
         self.select_prop_flag = ft.Dropdown(value="Name", width=150)
         self.Paper_list = ft.Column(scroll=ft.ScrollMode.HIDDEN, expand=True)
         self._input_Paper_List = _Papers_List(self.results, self._add_Paper_list)
-        self.run_button = ft.FilledButton(
+        self.run_button = ft.ElevatedButton(
             "bibファイルを出力する", on_click=self.__onclick_makebib
         )
 
@@ -559,8 +575,13 @@ class view_bib_maker(ft.View):
 
     def do_after_added_this_Control(self):
         # view_bib_makerを宣言した後最初に呼ぶ関数;
-        self.enable_if_folder_and_file_name_are_decided()
         self.change_button_style("init")
+        self.enable_if_folder_and_file_name_are_decided()
+        if (
+            self.edit_database.ED_flag_decided_folder_name
+            and self._Bib_Name.BFN_flag_decided_file_name
+        ):
+            self.add_Paper_List_New_Cite_in_prop(self._Bib_Name.value)
 
     def enable_if_folder_and_file_name_are_decided(self):
         # フォルダ名とファイル名が決まったら有効化する;
@@ -675,6 +696,7 @@ class view_bib_maker(ft.View):
                     un_added_paper,
                 )
 
+
     def change_button_style(
         self,
         process: typing.Literal["init", "processing", "warn", "done"],
@@ -682,32 +704,34 @@ class view_bib_maker(ft.View):
     ):
         match process:
             case "init":
-                self.run_button.style = None
                 self.run_button.text = "bibファイルを出力する"
+                self.run_button.bgcolor=ft.colors.BLUE
+                self.run_button.style = None
                 self.run_button.on_click = self.__onclick_makebib
                 self.run_button.disabled = False
             case "processing":
+                self.run_button.text = "実行中..."
                 self.run_button.style = ft.ButtonStyle(
                     bgcolor=ft.colors.PURPLE,
                     shape=None,
                     # color=ft.colors.DEEP_PURPLE,
                 )
                 self.run_button.icon=ft.ProgressRing(width=16, height=16)
-                self.run_button.text = "実行中..."
                 self.run_button.disabled = True
             case "warn":
-                self.run_button.style = ft.ButtonStyle(bgcolor=ft.colors.RED)
                 self.run_button.text = warn_text + "\n クリックして戻る"
+                self.run_button.style = ft.ButtonStyle(bgcolor=ft.colors.RED)
                 self.run_button.disabled = False
                 self.run_button.on_click = lambda e: self.change_button_style("init")
             case "done":
                 self.run_button.disabled = False
+                self.run_button.text = "出力成功\nクリックして次の出力へ"
                 self.run_button.style = ft.ButtonStyle(
                     # color=ft.colors.GREEN,
-                    bgcolor=ft.colors.GREEN,
+                    bgcolor=ft.colors.GREEN_100,
                     shape=ft.BeveledRectangleBorder(radius=0),
+                    side=ft.BorderSide(2, ft.colors.GREEN_500),
                 )
-                self.run_button.text = "出力成功\nクリックして次の出力へ"
                 self.run_button.on_click = lambda e: self.change_button_style("init")
         self.update()
 
