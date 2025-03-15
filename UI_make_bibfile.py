@@ -529,11 +529,11 @@ class view_bib_maker(ft.View):
             filename_list,
             self.add_Paper_List_New_Cite_in_prop,
             self._notion_config_simple,
-            self.enable_input_if_folder_and_file_name_are_decided,
+            self.enable_if_folder_and_file_name_are_decided,
         )
         self.edit_database = _Edit_Database(
             self._notion_config_simple,
-            self.enable_input_if_folder_and_file_name_are_decided,
+            self.enable_if_folder_and_file_name_are_decided,
         )
         self.controls.append(
             ft.Row(
@@ -556,10 +556,14 @@ class view_bib_maker(ft.View):
         self.controls.append(self._input_Paper_List)
         self.controls.append(self.run_button)
         self.controls.append(self.Paper_list)
-    def do_after_added_this_Control(self):
-        self.enable_input_if_folder_and_file_name_are_decided()
 
-    def enable_input_if_folder_and_file_name_are_decided(self):
+    def do_after_added_this_Control(self):
+        # view_bib_makerを宣言した後最初に呼ぶ関数;
+        self.enable_if_folder_and_file_name_are_decided()
+        self.change_button_style("init")
+
+    def enable_if_folder_and_file_name_are_decided(self):
+        # フォルダ名とファイル名が決まったら有効化する;
         if (
             self.edit_database.ED_flag_decided_folder_name
             and self._Bib_Name.BFN_flag_decided_file_name
@@ -671,13 +675,45 @@ class view_bib_maker(ft.View):
                     un_added_paper,
                 )
 
+    def change_button_style(
+        self,
+        process: typing.Literal["init", "processing", "warn", "done"],
+        warn_text=None,
+    ):
+        match process:
+            case "init":
+                self.run_button.style = None
+                self.run_button.text = "bibファイルを出力する"
+                self.run_button.on_click = self.__onclick_makebib
+                self.run_button.disabled = False
+            case "processing":
+                self.run_button.style = ft.ButtonStyle(
+                    bgcolor=ft.colors.PURPLE,
+                    shape=None,
+                    # color=ft.colors.DEEP_PURPLE,
+                )
+                self.run_button.icon=ft.ProgressRing(width=16, height=16)
+                self.run_button.text = "実行中..."
+                self.run_button.disabled = True
+            case "warn":
+                self.run_button.style = ft.ButtonStyle(bgcolor=ft.colors.RED)
+                self.run_button.text = warn_text + "\n クリックして戻る"
+                self.run_button.disabled = False
+                self.run_button.on_click = lambda e: self.change_button_style("init")
+            case "done":
+                self.run_button.disabled = False
+                self.run_button.style = ft.ButtonStyle(
+                    # color=ft.colors.GREEN,
+                    bgcolor=ft.colors.GREEN,
+                    shape=ft.BeveledRectangleBorder(radius=0),
+                )
+                self.run_button.text = "出力成功\nクリックして次の出力へ"
+                self.run_button.on_click = lambda e: self.change_button_style("init")
+        self.update()
+
     def __onclick_makebib(self, e):
         # 実行中を表すUIの変更;
-        self.run_button.text = "実行中..."
-        self.run_button.style = ft.ButtonStyle(
-            bgcolor=ft.colors.GREEN, shape=ft.RoundedRectangleBorder(radius=1)
-        )
-        self.update()
+        self.change_button_style("processing")
         bib_name = self._Bib_Name.value
         list_papers = [items.get_notion_page() for items in self.Paper_list.controls]
         try:
@@ -688,11 +724,6 @@ class view_bib_maker(ft.View):
             import sys
 
             exc = sys.exc_info()
-            print(str(exc[1]))
-            self.run_button.text = str(exc[1])
-            self.run_button.style = ft.ButtonStyle(bgcolor=ft.colors.RED)
-            self.update()
+            self.change_button_style("warn", str(exc[1]))
             return
-        self.run_button.style = None
-        self.run_button.text = "bibファイルを出力する"
-        self.update()
+        self.change_button_style("done")
