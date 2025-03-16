@@ -133,7 +133,7 @@ class _Edit_Database(ft.Row):
         self.__ED_buttun_edit.visible = True
         self.__ED_config["database"]["database_id"] = self.__ED_text_database_id.value
         self.__ED_config["database"]["tokenkey"] = self.__ED_text_tokenkey.value
-        with open(self._path_config, "w") as configfile:
+        with open(_path_config, "w") as configfile:
             self.__ED_config.write(configfile, True)
         self.update()
 

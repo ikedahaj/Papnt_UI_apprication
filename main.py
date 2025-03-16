@@ -45,81 +45,24 @@ def main(page: ft.Page):
 
     class Dialog(ft.AlertDialog):
         def __init__(
-            self,
-            modal=False,
-            title=None,
-            content=None,
-            actions=None,
-            bgcolor=None,
-            elevation=None,
-            icon=None,
-            open=False,
-            title_padding=None,
-            content_padding=None,
-            actions_padding=None,
-            actions_alignment=None,
-            shape=None,
-            inset_padding=None,
-            icon_padding=None,
-            action_button_padding=None,
-            surface_tint_color=None,
-            shadow_color=None,
-            icon_color=None,
-            scrollable=None,
-            actions_overflow_button_spacing=None,
-            alignment=None,
-            content_text_style=None,
-            title_text_style=None,
-            clip_behavior=None,
-            semantics_label=None,
-            on_dismiss=None,
-            ref=None,
-            disabled=None,
-            visible=None,
-            data=None,
-            adaptive=None,
+            self, title=None, content=None, actions=None, adaptive=None, **others
         ):
             super().__init__(
-                modal,
-                title,
-                content,
-                actions,
-                bgcolor,
-                elevation,
-                icon,
-                open,
-                title_padding,
-                content_padding,
-                actions_padding,
-                actions_alignment,
-                shape,
-                inset_padding,
-                icon_padding,
-                action_button_padding,
-                surface_tint_color,
-                shadow_color,
-                icon_color,
-                scrollable,
-                actions_overflow_button_spacing,
-                alignment,
-                content_text_style,
-                title_text_style,
-                clip_behavior,
-                semantics_label,
-                on_dismiss,
-                ref,
-                disabled,
-                visible,
-                data,
-                adaptive,
+                title=title,
+                content=content,
+                actions=actions,
+                adaptive=adaptive,
+                **others
             )
             self.on_dismiss = self.clean_dismissed
 
-        def open_dialog(self):
+        def open_dialog(self, title_content: type[ft.Text] | None):
+            if title_content is not None:
+                self.title = title_content
             page.open(self)
 
         def clean_dismissed(self, e):
-            self.content = ft.Column()
+            self.content.clean()
 
     class switch_light_dark_theme(ft.FloatingActionButton):
         def __init__(self):
