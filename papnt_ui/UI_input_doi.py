@@ -413,8 +413,9 @@ class View_input_doi(ft.View):
             icon=ft.icons.DELETE, on_click=delete_clicked
         )
         img = ft.Image(
-            src=os.path.dirname(os.path.abspath(__file__))
-            + "/arxiv-logomark-small.svg",
+            src=
+            # os.path.dirname(os.path.abspath(__file__))
+             "../assets/arxiv-logomark-small.svg",
             fit=ft.ImageFit.CONTAIN,
             width=30,
             height=30,
