@@ -23,7 +23,7 @@ def main(page: ft.Page):
                 self.update()
                 if self.__view_make_bib is None:
                     self.__view_make_bib = UI_make_bibfile.view_bib_maker(
-                        [button_change_theme]
+                        [button_change_theme],dialog_arXiv_check
                     )
                     UI_input_doi.list_un_added_papers.clear()
                 else:
@@ -55,10 +55,11 @@ def main(page: ft.Page):
                 **others
             )
             self.on_dismiss = self.clean_dismissed
+            self.expand=True
 
-        def open_dialog(self, title_content: type[ft.Text] | None):
-            if title_content is not None:
-                self.title = title_content
+        def open_dialog(self, title_text: str | None):
+            if title_text is not None:
+                self.title = ft.Text(title_text)
             page.open(self)
 
         def clean_dismissed(self, e):
@@ -94,7 +95,7 @@ def main(page: ft.Page):
 
     button_change_theme = switch_light_dark_theme()
     dialog_arXiv_check = Dialog(
-        title=ft.Text("arXiv論文の出版チェック"),
+        title=ft.Text("出版されたarXiv論文が存在します"),
         adaptive=True,
         actions=[
             ft.TextButton("close", on_click=lambda e: page.close(dialog_arXiv_check))

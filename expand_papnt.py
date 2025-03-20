@@ -144,7 +144,7 @@ def makebib(
     props_paper: list[dict],
     notion_configs: dict,
     database: papnt.database.Database,
-):
+) -> list[str]:
     """
     候補に挙げられている論文から、
     1. notion側にCite in プロパティを追加
@@ -154,10 +154,13 @@ def makebib(
         props_paper (list[string]): 出力する論文のリスト。要素はnotionの"result"
         notion_configs (dict): papnt のconfig
         database (papnt.database.Database) : papntのdatabase
+    Returns:
+        list(string): 出版されたarXiv論文のタイトル集
     """
     # notionのCite in にデータを追加する;
     # bibに出力する論文のリストを作る;
     list_add_bib_papers: list[dict] = []
+    published_arxiv_paper_list: list[str] = []
     for notion_page in props_paper:
         # print(notion_page)
         cite_in_items = [
@@ -184,6 +187,9 @@ def makebib(
         )
         if page_arXiv_update is not None:
             notion_page = page_arXiv_update
+            published_arxiv_paper_list.append(
+                access_notion_prop_value(notion_page, "Name")
+            )
         list_add_bib_papers.append(notion_page)
     """Make BIB file including reference information from database"""
     _make_bibfile_from_lists(
@@ -196,3 +202,4 @@ def makebib(
         f'{notion_configs["misc"]["dir_save_bib"]}/{bib_name}.bib',
         notion_configs["abbr"],
     )
+    return published_arxiv_paper_list

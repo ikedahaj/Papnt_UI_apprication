@@ -389,7 +389,7 @@ class View_input_doi(ft.View):
                 _run_papnt_doi(input_doi)
 
         def on_clicked_check_arXiv(e):
-            dialog_arXiv_check.open_dialog()
+            dialog_arXiv_check.open_dialog("arXiv論文の出版チェック")
             # self.update()
             _check_arXiv_published(dialog_arXiv_check)
 

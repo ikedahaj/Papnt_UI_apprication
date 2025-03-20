@@ -507,7 +507,7 @@ class _Text_Paper(ft.Row):
 
 
 class view_bib_maker(ft.View):
-    def __init__(self, appbar_actions: list):
+    def __init__(self, appbar_actions: list,dialog):
         super().__init__()
         self.route = "/make_bib_file"
         self.appbar = ft.AppBar(title=ft.Text("make_bib_file"), actions=appbar_actions)
@@ -572,7 +572,7 @@ class view_bib_maker(ft.View):
         self.controls.append(self._input_Paper_List)
         self.controls.append(self.run_button)
         self.controls.append(self.Paper_list)
-
+        self.dialog_app=dialog
     def do_after_added_this_Control(self):
         # view_bib_makerを宣言した後最初に呼ぶ関数;
         self.change_button_style("init")
@@ -734,14 +734,19 @@ class view_bib_maker(ft.View):
                 )
                 self.run_button.on_click = lambda e: self.change_button_style("init")
         self.update()
-
+    def __add_dialog_titles(self,titles):
+        self.dialog_app.open_dialog("出版されたarXiv論文が\n存在します。\n追加ページで更新して下さい")
+        for title in titles:
+            self.dialog_app.content.controls.append(ft.Text(title))
+        self.update()
+        self.dialog_app.update()
     def __onclick_makebib(self, e):
         # 実行中を表すUIの変更;
         self.change_button_style("processing")
         bib_name = self._Bib_Name.value
         list_papers = [items.get_notion_page() for items in self.Paper_list.controls]
         try:
-            expand_papnt.makebib(
+            list_published_arXiv_papers= expand_papnt.makebib(
                 bib_name, list_papers, self.__notion_configs, self.database
             )
         except:
@@ -751,3 +756,6 @@ class view_bib_maker(ft.View):
             self.change_button_style("warn", str(exc[1]))
             return
         self.change_button_style("done")
+        if len(list_published_arXiv_papers)>0:
+            self.__add_dialog_titles(list_published_arXiv_papers)
+
