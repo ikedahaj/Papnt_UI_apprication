@@ -1,14 +1,14 @@
 [project]
-name = "myapp"
+name = "papnt_ui"
 version = "0.1.0"
-description = ""
+description = "An application to operate papnt on the UI."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 authors = [
-    { name = "Flet developer", email = "you@example.com" }
+    { name = "Tirai Basou", email = "tirai.basou@gmail.com" }
 ]
 dependencies = [
-  "flet"
+  "flet","papnt","arxiv","configparser","bibtexparser"
 ]
 
 [tool.flet]
@@ -16,6 +16,8 @@ org = "com.mycompany"
 product = "MyApp"
 company = "My Company"
 copyright = "Copyright (C) 2025 by My Company"
+app.module = "main"
+build_number = 1
 
 [tool.flet.app]
 path = "src"
